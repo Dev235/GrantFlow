@@ -1,0 +1,89 @@
+// src/components/common/Navbar.jsx
+import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { LogOut, LayoutDashboard, FileText, Edit, FolderKanban, UserCircle, Users } from 'lucide-react';
+
+export default function Navbar() {
+    const { user, logout } = useAuth();
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
+
+    const applicantLinks = [
+        { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={18}/> },
+        { name: 'Discover Grants', path: '/grants', icon: <FileText size={18}/> },
+        { name: 'My Applications', path: '/applications', icon: <FolderKanban size={18}/> },
+    ];
+
+    const grantMakerLinks = [
+        { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={18}/> },
+        { name: 'Create Grant', path: '/manage/create', icon: <Edit size={18}/> },
+        { name: 'Manage Grants', path: '/manage/grants', icon: <FolderKanban size={18}/> },
+    ];
+
+    const superAdminLinks = [
+        ...grantMakerLinks,
+        // { name: 'User Management', path: '/admin/users', icon: <Users size={18}/> }, // Example for future
+    ];
+
+    const getNavLinks = () => {
+        if (!user) return [];
+        switch (user.role) {
+            case 'Applicant':
+                return applicantLinks;
+            case 'Grant Maker':
+                return grantMakerLinks;
+            case 'Super Admin':
+                return superAdminLinks;
+            default:
+                return [];
+        }
+    };
+    
+    const navLinks = getNavLinks();
+
+    return (
+        <header className="bg-white shadow-sm sticky top-0 z-50">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between h-16">
+                    <Link to="/" className="text-2xl font-bold text-indigo-600">
+                        GrantFlow
+                    </Link>
+                    {user && (
+                        <nav className="hidden md:flex items-center space-x-6">
+                            {navLinks.map(link => (
+                                <Link key={link.name} to={link.path} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 transition-colors">
+                                    {link.icon}
+                                    <span className="font-medium">{link.name}</span>
+                                </Link>
+                            ))}
+                        </nav>
+                    )}
+                    <div className="flex items-center space-x-4">
+                        {user ? (
+                            <>
+                                <div className="flex items-center gap-2">
+                                   <UserCircle className="text-gray-500" />
+                                   <span className="text-gray-700 font-medium hidden sm:block">{user.name}</span>
+                                   <span className="text-xs bg-gray-200 text-gray-600 font-semibold px-2 py-1 rounded-full hidden lg:block">{user.role}</span>
+                                </div>
+                                <button onClick={handleLogout} className="p-2 rounded-full text-gray-500 hover:bg-red-100 hover:text-red-600" aria-label="Logout">
+                                    <LogOut size={20} />
+                                </button>
+                            </>
+                        ) : (
+                            <div className="space-x-2">
+                                <Link to="/login" className="px-4 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100">Login</Link>
+                                <Link to="/register" className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Register</Link>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </header>
+    );
+};
