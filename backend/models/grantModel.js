@@ -1,4 +1,4 @@
-// models/grantModel.js
+// backend/models/grantModel.js
 // Mongoose schema for Grants
 
 const mongoose = require('mongoose');
@@ -18,6 +18,12 @@ const questionSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  // NEW: Add a points field for scoring
+  points: {
+    type: Number,
+    required: true,
+    default: 10,
+  }
 });
 
 const grantSchema = new mongoose.Schema(

@@ -1,7 +1,8 @@
+// frontend/src/pages/CreateGrantPage.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { PlusCircle, Trash2 } from 'lucide-react';
+import { PlusCircle, Trash2, Award } from 'lucide-react';
 
 export default function CreateGrantPage() {
     const { user } = useAuth();
@@ -12,18 +13,18 @@ export default function CreateGrantPage() {
         amount: '',
         category: '',
         deadline: '',
-        applicationQuestions: [{ questionText: '', questionType: 'text', isRequired: true }],
+        applicationQuestions: [{ questionText: '', questionType: 'text', isRequired: true, points: 10 }],
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
-    // Malaysian-centric preset questions
+    // Malaysian-centric preset questions with default points
     const presetQuestions = [
-        { questionText: "Sila terangkan latar belakang organisasi anda. (Please describe your organization's background.)", questionType: 'textarea', isRequired: true },
-        { questionText: "Apakah masalah yang cuba diselesaikan oleh projek ini di Malaysia? (What problem is this project trying to solve in Malaysia?)", questionType: 'textarea', isRequired: true },
-        { questionText: "Sila berikan butiran bajet untuk projek ini dalam Ringgit Malaysia (MYR).", questionType: 'textarea', isRequired: true },
-        { questionText: "Bagaimanakah anda akan mengukur impak dan kejayaan projek ini?", questionType: 'textarea', isRequired: true },
-        { questionText: "Muat naik salinan pendaftaran Suruhanjaya Syarikat Malaysia (SSM) atau Pendaftar Pertubuhan (ROS) anda.", questionType: 'file', isRequired: true },
+        { questionText: "Sila terangkan latar belakang organisasi anda. (Please describe your organization's background.)", questionType: 'textarea', isRequired: true, points: 10 },
+        { questionText: "Apakah masalah yang cuba diselesaikan oleh projek ini di Malaysia? (What problem is this project trying to solve in Malaysia?)", questionType: 'textarea', isRequired: true, points: 20 },
+        { questionText: "Sila berikan butiran bajet untuk projek ini dalam Ringgit Malaysia (MYR).", questionType: 'textarea', isRequired: true, points: 15 },
+        { questionText: "Bagaimanakah anda akan mengukur impak dan kejayaan projek ini?", questionType: 'textarea', isRequired: true, points: 15 },
+        { questionText: "Muat naik salinan pendaftaran Suruhanjaya Syarikat Malaysia (SSM) atau Pendaftar Pertubuhan (ROS) anda.", questionType: 'file', isRequired: true, points: 5 },
     ];
 
     const handleGrantChange = (e) => {
@@ -39,7 +40,7 @@ export default function CreateGrantPage() {
     };
 
     const addQuestion = () => {
-        setGrant({ ...grant, applicationQuestions: [...grant.applicationQuestions, { questionText: '', questionType: 'text', isRequired: true }] });
+        setGrant({ ...grant, applicationQuestions: [...grant.applicationQuestions, { questionText: '', questionType: 'text', isRequired: true, points: 10 }] });
     };
 
     const removeQuestion = (index) => {
@@ -48,7 +49,6 @@ export default function CreateGrantPage() {
     };
     
     const addPresetQuestion = (question) => {
-        // Avoid adding duplicate questions
         if (!grant.applicationQuestions.some(q => q.questionText === question.questionText)) {
             setGrant({ ...grant, applicationQuestions: [...grant.applicationQuestions, {...question}] });
         }
@@ -88,7 +88,6 @@ export default function CreateGrantPage() {
                 
                 <div className="space-y-4">
                     <h2 className="text-xl font-semibold text-gray-700 border-b pb-2">Grant Details</h2>
-                    {/* Form fields for grant details */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Grant Title</label>
                         <input type="text" name="title" value={grant.title} onChange={handleGrantChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required />
@@ -135,8 +134,8 @@ export default function CreateGrantPage() {
                                 </button>
                             </div>
                             <input type="text" name="questionText" value={q.questionText} onChange={(e) => handleQuestionChange(index, e)} placeholder="Enter your question" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required />
-                            <div className="flex items-center gap-4">
-                                <select name="questionType" value={q.questionType} onChange={(e) => handleQuestionChange(index, e)} className="mt-1 block w-1/2 rounded-md border-gray-300 shadow-sm bg-white">
+                            <div className="grid grid-cols-3 items-center gap-4">
+                                <select name="questionType" value={q.questionType} onChange={(e) => handleQuestionChange(index, e)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-white">
                                     <option value="text">Short Text</option>
                                     <option value="textarea">Paragraph</option>
                                     <option value="number">Number</option>
@@ -146,6 +145,18 @@ export default function CreateGrantPage() {
                                 <div className="flex items-center">
                                     <input type="checkbox" name="isRequired" checked={q.isRequired} onChange={(e) => handleQuestionChange(index, e)} className="h-4 w-4 text-indigo-600 border-gray-300 rounded" />
                                     <label className="ml-2 block text-sm text-gray-900">Required</label>
+                                </div>
+                                {/* NEW: Points input field */}
+                                <div className="relative">
+                                    <Award className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                                    <input 
+                                      type="number" 
+                                      name="points" 
+                                      value={q.points} 
+                                      onChange={(e) => handleQuestionChange(index, e)} 
+                                      className="pl-9 pr-2 py-2 mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                                      min="0"
+                                    />
                                 </div>
                             </div>
                         </div>

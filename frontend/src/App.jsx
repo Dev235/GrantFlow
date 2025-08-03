@@ -1,3 +1,4 @@
+// frontend/src/App.jsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 
@@ -10,6 +11,7 @@ import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import GrantsPage from './pages/GrantsPage';
 import CreateGrantPage from './pages/CreateGrantPage';
+import EditGrantPage from './pages/EditGrantPage'; // Import the new page
 import ManageGrantsPage from './pages/ManageGrantsPage';
 import ApplyGrantPage from './pages/ApplyGrantPage';
 import MyApplicationsPage from './pages/MyApplicationsPage';
@@ -66,6 +68,8 @@ const AppContent = () => {
                     {/* Grant Maker & Admin Routes */}
                     <Route path="/manage/create" element={<ProtectedRoute roles={['Grant Maker', 'Super Admin']}><CreateGrantPage /></ProtectedRoute>} />
                     <Route path="/manage/grants" element={<ProtectedRoute roles={['Grant Maker', 'Super Admin']}><ManageGrantsPage /></ProtectedRoute>} />
+                    {/* NEW: Add the route for editing a grant */}
+                    <Route path="/manage/grants/edit/:id" element={<ProtectedRoute roles={['Grant Maker', 'Super Admin']}><EditGrantPage /></ProtectedRoute>} />
                     <Route path="/manage/applications/:grantId" element={<ProtectedRoute roles={['Grant Maker', 'Super Admin']}><ApplicationViewerPage /></ProtectedRoute>} />
 
                     {/* Fallback Route */}

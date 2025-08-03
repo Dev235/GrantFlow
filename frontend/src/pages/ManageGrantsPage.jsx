@@ -1,3 +1,4 @@
+// frontend/src/pages/ManageGrantsPage.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -63,7 +64,8 @@ export default function ManageGrantsPage() {
                                 </div>
                                 <div className="flex items-center gap-2">
                                      <button onClick={() => navigate(`/manage/applications/${grant._id}`)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border rounded-md hover:bg-gray-100">View Applications</button>
-                                     <button onClick={() => alert('Edit page not implemented yet')} className="px-4 py-2 text-sm font-medium text-white bg-indigo-500 rounded-md hover:bg-indigo-600 inline-flex items-center gap-1">
+                                     {/* UPDATED: Navigate to the new edit page */}
+                                     <button onClick={() => navigate(`/manage/grants/edit/${grant._id}`)} className="px-4 py-2 text-sm font-medium text-white bg-indigo-500 rounded-md hover:bg-indigo-600 inline-flex items-center gap-1">
                                         <Edit size={16}/> Edit
                                      </button>
                                 </div>

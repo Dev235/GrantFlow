@@ -1,4 +1,4 @@
-// controllers/applicationController.js
+// backend/controllers/applicationController.js
 const Application = require('../models/applicationModel');
 const Grant = require('../models/grantModel');
 
@@ -11,13 +11,34 @@ const submitApplication = async (req, res) => {
     try {
         const grant = await Grant.findById(grantId);
         if (!grant) return res.status(404).json({ message: 'Grant not found' });
+
+        // --- SCORE CALCULATION LOGIC ---
+        let totalScore = 0;
+        const questionPointsMap = new Map();
+        grant.applicationQuestions.forEach(q => {
+            questionPointsMap.set(q._id.toString(), q.points);
+        });
+
+        answers.forEach(answer => {
+            // Award points only if an answer is provided (not null, undefined, or empty string)
+            if (answer.answer && answer.answer.toString().trim() !== '') {
+                const points = questionPointsMap.get(answer.questionId.toString());
+                if (points) {
+                    totalScore += points;
+                }
+            }
+        });
+        // --- END OF SCORE CALCULATION ---
+
         const application = new Application({
             grant: grantId,
             applicant: req.user._id,
             grantMaker: grant.grantMaker,
             answers: answers,
-            status: 'Submitted', // Default status
+            score: totalScore, // Save the calculated score
+            status: 'Submitted',
         });
+
         const createdApplication = await application.save();
         res.status(201).json(createdApplication);
     } catch (error) {
@@ -31,7 +52,8 @@ const submitApplication = async (req, res) => {
 const getApplicationsForGrant = async (req, res) => {
     try {
         const applications = await Application.find({ grant: req.params.grantId })
-            .populate('applicant', 'name email');
+            .populate('applicant', 'name email')
+            .sort({ score: -1 }); // Sort by score descending by default
         res.json(applications);
     } catch (error) {
         res.status(500).json({ message: "Server Error" });

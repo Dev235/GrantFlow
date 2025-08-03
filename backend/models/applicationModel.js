@@ -1,4 +1,4 @@
-// models/applicationModel.js
+// backend/models/applicationModel.js
 // Mongoose schema for submitted Grant Applications
 
 const mongoose = require('mongoose');
@@ -40,6 +40,11 @@ const applicationSchema = new mongoose.Schema(
       type: String,
       enum: ['Submitted', 'In Review', 'Approved', 'Rejected'],
       default: 'Submitted',
+    },
+    // NEW: Add a score field to store the calculated score
+    score: {
+        type: Number,
+        default: 0,
     },
     // The core of the application is the array of answers
     answers: [answerSchema],
