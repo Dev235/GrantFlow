@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
-import { Award, X } from 'lucide-react';
+import { Award, X, Download } from 'lucide-react';
 
 export default function ApplicationViewerPage() {
     const { grantId } = useParams();
@@ -12,18 +12,20 @@ export default function ApplicationViewerPage() {
     const [grant, setGrant] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [selectedApp, setSelectedApp] = useState(null); // State for modal
+    const [selectedApp, setSelectedApp] = useState(null);
+
+    const API_BASE_URL = 'http://localhost:5000';
 
     useEffect(() => {
         const fetchApplications = async () => {
             if (!user?.token) return;
             try {
-                const grantRes = await fetch(`http://localhost:5000/api/grants/${grantId}`);
+                const grantRes = await fetch(`${API_BASE_URL}/api/grants/${grantId}`);
                 if (!grantRes.ok) throw new Error('Could not fetch grant details.');
                 const grantData = await grantRes.json();
                 setGrant(grantData);
 
-                const appRes = await fetch(`http://localhost:5000/api/applications/grant/${grantId}`, {
+                const appRes = await fetch(`${API_BASE_URL}/api/applications/grant/${grantId}`, {
                     headers: { 'Authorization': `Bearer ${user.token}` },
                 });
                 if (!appRes.ok) throw new Error('Could not fetch applications.');
@@ -40,7 +42,7 @@ export default function ApplicationViewerPage() {
 
     const handleStatusChange = async (appId, newStatus) => {
         try {
-            const response = await fetch(`http://localhost:5000/api/applications/${appId}/status`, {
+            const response = await fetch(`${API_BASE_URL}/api/applications/${appId}/status`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -53,7 +55,6 @@ export default function ApplicationViewerPage() {
             setApplications(apps => apps.map(app => 
                 app._id === appId ? { ...app, status: newStatus } : app
             ));
-            // Also update the selected app if it's open
             if (selectedApp && selectedApp._id === appId) {
                 setSelectedApp(prev => ({ ...prev, status: newStatus }));
             }
@@ -71,6 +72,31 @@ export default function ApplicationViewerPage() {
             case 'Rejected': return 'bg-red-100 text-red-800';
             default: return 'bg-gray-100 text-gray-800';
         }
+    };
+
+    // --- Helper to render answers (text, images, or links) ---
+    const renderAnswer = (answer) => {
+        if (answer.questionType === 'file' && answer.answer) {
+            const filePath = `${API_BASE_URL}${answer.answer}`;
+            const isImage = /\.(jpeg|jpg|png|gif)$/i.test(answer.answer);
+
+            if (isImage) {
+                return (
+                    <a href={filePath} target="_blank" rel="noopener noreferrer">
+                        <img src={filePath} alt="Uploaded attachment" className="mt-2 rounded-lg max-w-sm border" />
+                    </a>
+                );
+            } else {
+                return (
+                    <a href={filePath} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 mt-2 px-4 py-2 text-sm font-medium text-indigo-700 bg-indigo-100 rounded-md hover:bg-indigo-200">
+                        <Download size={16} />
+                        Download File
+                    </a>
+                );
+            }
+        }
+        // For text, textarea, etc., display the text.
+        return <p className="text-gray-600 pl-4 border-l-2 border-gray-200 ml-2 mt-1 whitespace-pre-wrap">{answer.answer}</p>;
     };
 
     if (loading) return <div>Loading applications...</div>;
@@ -120,7 +146,6 @@ export default function ApplicationViewerPage() {
                 <p className="text-center py-10 bg-white rounded-xl shadow-md">No applications have been submitted for this grant yet.</p>
             )}
 
-            {/* Application Details Modal */}
             {selectedApp && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
                     <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
@@ -161,7 +186,7 @@ export default function ApplicationViewerPage() {
                                     {selectedApp.answers.map(answer => (
                                         <li key={answer._id}>
                                             <p className="font-medium text-gray-700">{answer.questionText}</p>
-                                            <p className="text-gray-600 pl-4 border-l-2 border-gray-200 ml-2 mt-1 whitespace-pre-wrap">{answer.answer}</p>
+                                            {renderAnswer(answer)}
                                         </li>
                                     ))}
                                 </ul>

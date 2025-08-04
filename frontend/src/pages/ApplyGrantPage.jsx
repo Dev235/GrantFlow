@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { UploadCloud, CheckCircle, AlertCircle } from 'lucide-react';
 
 export default function ApplyGrantPage() {
     const { id: grantId } = useParams();
@@ -11,6 +12,8 @@ export default function ApplyGrantPage() {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
+    // State to manage file upload status for each question
+    const [fileUploadStatus, setFileUploadStatus] = useState({});
 
     useEffect(() => {
         const fetchGrant = async () => {
@@ -19,7 +22,6 @@ export default function ApplyGrantPage() {
                 if (!response.ok) throw new Error('Could not fetch grant details.');
                 const data = await response.json();
                 setGrant(data);
-                // Initialize answers state
                 const initialAnswers = {};
                 data.applicationQuestions.forEach(q => {
                     initialAnswers[q._id] = '';
@@ -37,6 +39,43 @@ export default function ApplyGrantPage() {
     const handleAnswerChange = (questionId, value) => {
         setAnswers(prev => ({ ...prev, [questionId]: value }));
     };
+
+    // --- New Function to Handle File Uploads ---
+    const handleFileChange = async (questionId, file) => {
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        setFileUploadStatus(prev => ({ ...prev, [questionId]: { status: 'uploading' } }));
+
+        try {
+            const response = await fetch('http://localhost:5000/api/upload', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${user.token}`,
+                },
+                body: formData,
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'File upload failed.');
+            }
+
+            // On success, update the answer with the file path from the server
+            handleAnswerChange(questionId, data.filePath);
+            setFileUploadStatus(prev => ({ ...prev, [questionId]: { status: 'success', name: file.name } }));
+
+        } catch (err) {
+            console.error(err);
+            setFileUploadStatus(prev => ({ ...prev, [questionId]: { status: 'error', message: err.message } }));
+            // Clear the answer if upload fails
+            handleAnswerChange(questionId, '');
+        }
+    };
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -95,12 +134,35 @@ export default function ApplyGrantPage() {
                                 rows="4"
                             />
                         ) : q.questionType === 'file' ? (
-                            <input
-                                type="file"
-                                onChange={(e) => handleAnswerChange(q._id, e.target.files[0].name)} // Note: Not a real upload, just storing filename
-                                required={q.isRequired}
-                                className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-                            />
+                            <div className="mt-1">
+                                <input
+                                    type="file"
+                                    id={`file-upload-${q._id}`}
+                                    onChange={(e) => handleFileChange(q._id, e.target.files[0])}
+                                    required={q.isRequired && !answers[q._id]}
+                                    className="hidden"
+                                />
+                                <label htmlFor={`file-upload-${q._id}`} className="relative flex justify-center w-full px-6 py-10 text-center bg-white border-2 border-dashed border-gray-300 rounded-md cursor-pointer hover:border-indigo-500">
+                                    <div className="text-gray-600">
+                                        <UploadCloud className="w-8 h-8 mx-auto text-gray-400" />
+                                        <p className="mt-1 text-sm">Click to upload a file</p>
+                                        <p className="text-xs text-gray-500">PNG, JPG, or PDF up to 5MB</p>
+                                    </div>
+                                </label>
+                                {fileUploadStatus[q._id]?.status === 'uploading' && <p className="text-sm text-gray-500 mt-2">Uploading...</p>}
+                                {fileUploadStatus[q._id]?.status === 'success' && (
+                                    <div className="flex items-center gap-2 mt-2 text-sm text-green-600">
+                                        <CheckCircle size={16} />
+                                        <span>{fileUploadStatus[q._id].name} uploaded successfully.</span>
+                                    </div>
+                                )}
+                                {fileUploadStatus[q._id]?.status === 'error' && (
+                                     <div className="flex items-center gap-2 mt-2 text-sm text-red-600">
+                                        <AlertCircle size={16} />
+                                        <span>Error: {fileUploadStatus[q._id].message}</span>
+                                    </div>
+                                )}
+                            </div>
                         ) : (
                             <input
                                 type={q.questionType}

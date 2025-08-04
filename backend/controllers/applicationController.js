@@ -14,19 +14,23 @@ const submitApplication = async (req, res) => {
 
         // --- SCORE CALCULATION LOGIC ---
         let totalScore = 0;
-        const questionPointsMap = new Map();
+        const questionMap = new Map();
         grant.applicationQuestions.forEach(q => {
-            questionPointsMap.set(q._id.toString(), q.points);
+            questionMap.set(q._id.toString(), { points: q.points, questionType: q.questionType });
         });
 
-        answers.forEach(answer => {
-            // Award points only if an answer is provided (not null, undefined, or empty string)
+        // Add questionType to each answer and calculate score
+        const answersWithTypes = answers.map(answer => {
+            const questionDetails = questionMap.get(answer.questionId.toString());
             if (answer.answer && answer.answer.toString().trim() !== '') {
-                const points = questionPointsMap.get(answer.questionId.toString());
-                if (points) {
-                    totalScore += points;
+                 if (questionDetails && questionDetails.points) {
+                    totalScore += questionDetails.points;
                 }
             }
+            return {
+                ...answer,
+                questionType: questionDetails ? questionDetails.questionType : 'text', // Default to text if not found
+            };
         });
         // --- END OF SCORE CALCULATION ---
 
@@ -34,8 +38,8 @@ const submitApplication = async (req, res) => {
             grant: grantId,
             applicant: req.user._id,
             grantMaker: grant.grantMaker,
-            answers: answers,
-            score: totalScore, // Save the calculated score
+            answers: answersWithTypes, // Use the new array with question types
+            score: totalScore,
             status: 'Submitted',
         });
 
@@ -81,7 +85,6 @@ const updateApplicationStatus = async (req, res) => {
         const application = await Application.findById(req.params.id);
         if (!application) return res.status(404).json({ message: 'Application not found' });
         
-        // Ensure the user updating is the grant maker for this application
         if (application.grantMaker.toString() !== req.user._id.toString()) {
             return res.status(401).json({ message: 'Not authorized' });
         }

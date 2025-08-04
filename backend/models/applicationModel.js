@@ -13,6 +13,11 @@ const answerSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  // NEW: Added questionType to easily identify file uploads on the frontend.
+  questionType: {
+    type: String,
+    required: true,
+  },
   answer: {
     type: mongoose.Schema.Types.Mixed, // Can be String, Number, Date, or a file path (String)
     required: true,
@@ -41,12 +46,10 @@ const applicationSchema = new mongoose.Schema(
       enum: ['Submitted', 'In Review', 'Approved', 'Rejected'],
       default: 'Submitted',
     },
-    // NEW: Add a score field to store the calculated score
     score: {
         type: Number,
         default: 0,
     },
-    // The core of the application is the array of answers
     answers: [answerSchema],
   },
   {

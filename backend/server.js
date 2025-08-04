@@ -2,6 +2,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const path = require('path'); // Import path module
 const connectDB = require('./config/db');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 
@@ -11,7 +12,8 @@ const userRoutes = require('./routes/userRoutes');
 const grantRoutes = require('./routes/grantRoutes');
 const chatbotRoutes = require('./routes/chatbotRoutes');
 const applicationRoutes = require('./routes/applicationRoutes');
-const dashboardRoutes = require('./routes/dashboardRoutes'); // Import new routes
+const dashboardRoutes = require('./routes/dashboardRoutes');
+const uploadRoutes = require('./routes/uploadRoutes'); // Import upload routes
 
 // Load environment variables
 dotenv.config();
@@ -35,7 +37,14 @@ app.use('/api/users', userRoutes);
 app.use('/api/grants', grantRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/applications', applicationRoutes);
-app.use('/api/dashboard', dashboardRoutes); // Mount new routes
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/upload', uploadRoutes); // Mount upload routes
+
+// --- Serve Uploaded Files Statically ---
+// This makes the 'uploads' folder accessible via HTTP requests
+// e.g., http://localhost:5000/uploads/filename.jpg
+app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
+
 
 // Custom Error Handling
 app.use(notFound);
