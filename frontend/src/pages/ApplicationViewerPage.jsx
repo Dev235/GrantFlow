@@ -3,12 +3,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
-import { Award, X, Download, Flag, CheckCircle, Inbox, Clock, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Award, X, Download, Flag, CheckCircle, Inbox, Clock, ThumbsUp, ThumbsDown, UserCircle, Calendar, Mail, ArrowRightCircle } from 'lucide-react';
+import ConfirmationModal from '../components/common/ConfirmationModal';
 
 // A dedicated component for rendering each application as a card
-const ApplicationCard = ({ app, totalPossiblePoints, onStatusChange, onFlagSet, onSelectApp, flagColorClass }) => {
+const ApplicationCard = ({ app, totalPossiblePoints, onStatusChange, onFlagSet, onSelectApp, flagColorClass, currentFlag }) => {
     return (
-        <div className="bg-white rounded-lg shadow-md border border-gray-200 flex flex-col">
+        <div className="bg-white rounded-lg shadow-md border border-gray-200 flex flex-col hover:shadow-lg transition-shadow duration-300">
             <div className="p-4 border-b">
                 <h3 className="font-bold text-gray-800">{app.applicant.name}</h3>
                 <p className="text-sm text-gray-500">{app.applicant.email}</p>
@@ -24,16 +25,22 @@ const ApplicationCard = ({ app, totalPossiblePoints, onStatusChange, onFlagSet, 
                 </div>
                 {app.status === 'In Review' && (
                     <div className="flex justify-between items-center text-sm">
-                        <span className="text-gray-500">Flag:</span>
-                        <div className="relative group">
-                            <Flag className={`cursor-pointer ${flagColorClass}`} />
-                            <div className="absolute right-0 bottom-full mb-2 hidden group-hover:flex bg-white border rounded-md shadow-lg p-1 space-x-1 z-10">
-                                <div onClick={() => onFlagSet(app._id, 'green')} className="w-6 h-6 rounded-full cursor-pointer bg-green-500 hover:bg-green-600 border-2 border-white"></div>
-                                <div onClick={() => onFlagSet(app._id, 'orange')} className="w-6 h-6 rounded-full cursor-pointer bg-orange-500 hover:bg-orange-600 border-2 border-white"></div>
-                                <div onClick={() => onFlagSet(app._id, 'red')} className="w-6 h-6 rounded-full cursor-pointer bg-red-500 hover:bg-red-600 border-2 border-white"></div>
-                                <div onClick={() => onFlagSet(app._id, null)} className="w-6 h-6 rounded-full cursor-pointer bg-gray-300 hover:bg-gray-400 border-2 border-white flex items-center justify-center"><X size={12} /></div>
-                            </div>
-                        </div>
+                        <span className="text-gray-500 flex items-center gap-1"><Flag size={16} className={flagColorClass} /> Flag:</span>
+                         <select
+                            value={currentFlag || 'none'}
+                            onChange={(e) => onFlagSet(app._id, e.target.value === 'none' ? null : e.target.value)}
+                            className={`text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-1 font-medium ${
+                                currentFlag === 'green' ? 'bg-green-100 text-green-800' :
+                                currentFlag === 'orange' ? 'bg-orange-100 text-orange-800' :
+                                currentFlag === 'red' ? 'bg-red-100 text-red-800' : 'bg-white text-gray-800'
+                            }`}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <option value="none">No Flag</option>
+                            <option value="green">Green</option>
+                            <option value="orange">Orange</option>
+                            <option value="red">Red</option>
+                        </select>
                     </div>
                 )}
             </div>
@@ -41,10 +48,20 @@ const ApplicationCard = ({ app, totalPossiblePoints, onStatusChange, onFlagSet, 
                 <button onClick={() => onSelectApp(app)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border rounded-md hover:bg-gray-100">
                     View Details
                 </button>
-                {app.status !== 'Approved' && app.status !== 'Rejected' && (
-                    <button onClick={() => onStatusChange(app._id, 'Approved')} className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700">
-                        Approve
+                {app.status === 'Submitted' && (
+                     <button onClick={() => onStatusChange(app, 'In Review')} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 inline-flex items-center gap-2">
+                        Move to Review <ArrowRightCircle size={16}/>
                     </button>
+                )}
+                {app.status === 'In Review' && (
+                    <>
+                        <button onClick={() => onStatusChange(app, 'Rejected')} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700">
+                            Reject
+                        </button>
+                        <button onClick={() => onStatusChange(app, 'Approved')} className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700">
+                            Approve
+                        </button>
+                    </>
                 )}
             </div>
         </div>
@@ -61,8 +78,9 @@ export default function ApplicationViewerPage() {
     const [error, setError] = useState('');
     const [selectedApp, setSelectedApp] = useState(null);
     const [activeTab, setActiveTab] = useState('Submitted');
-    const [applicationFlags, setApplicationFlags] = useState({});
-
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [appToProcess, setAppToProcess] = useState(null);
+    
     const API_BASE_URL = 'http://localhost:5000';
 
     const totalPossiblePoints = useMemo(() => {
@@ -94,12 +112,17 @@ export default function ApplicationViewerPage() {
         fetchApplications();
     }, [grantId, user]);
     
-    const handleStatusChange = async (appId, newStatus) => {
-        if (newStatus === 'Approved') {
-            if (!window.confirm('Are you sure you want to approve this application? This action is final.')) {
-                return;
-            }
+    const handleStatusChange = (app, newStatus) => {
+        setAppToProcess({ app, newStatus });
+        if (newStatus === 'Approved' || newStatus === 'Rejected') {
+            setIsConfirmModalOpen(true);
+        } else {
+            confirmStatusChange(app._id, newStatus);
         }
+    };
+
+    const confirmStatusChange = async (appId, newStatus) => {
+        if (!appId || !newStatus) return;
         try {
             const response = await fetch(`${API_BASE_URL}/api/applications/${appId}/status`, {
                 method: 'PUT',
@@ -117,18 +140,36 @@ export default function ApplicationViewerPage() {
             if (selectedApp && selectedApp._id === appId) {
                 setSelectedApp(prev => ({ ...prev, status: newStatus }));
             }
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setIsConfirmModalOpen(false);
+            setAppToProcess(null);
+        }
+    };
 
+    const handleFlagSet = async (appId, color) => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/applications/${appId}/flag`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${user.token}`,
+                },
+                body: JSON.stringify({ flag: color }),
+            });
+            if (!response.ok) throw new Error('Failed to update flag.');
+            const updatedApp = await response.json();
+            
+            setApplications(apps => apps.map(app => 
+                app._id === appId ? { ...app, flag: updatedApp.flag } : app
+            ));
         } catch (err) {
             setError(err.message);
         }
     };
 
-    const handleFlagSet = (appId, color) => {
-        setApplicationFlags(prev => ({...prev, [appId]: color}));
-    };
-
-    const getFlagColorClass = (appId) => {
-        const flag = applicationFlags[appId];
+    const getFlagColorClass = (flag) => {
         switch (flag) {
             case 'green': return 'text-green-500';
             case 'orange': return 'text-orange-500';
@@ -157,7 +198,7 @@ export default function ApplicationViewerPage() {
                 );
             }
         }
-        return <p className="text-gray-600 pl-4 border-l-2 border-gray-200 ml-2 mt-1 whitespace-pre-wrap">{answer.answer}</p>;
+        return <p className="text-gray-800 mt-1 whitespace-pre-wrap">{answer.answer || <span className="text-gray-400">No answer provided.</span>}</p>;
     };
 
     const categorizedApps = useMemo(() => ({
@@ -211,7 +252,8 @@ export default function ApplicationViewerPage() {
                             onStatusChange={handleStatusChange}
                             onFlagSet={handleFlagSet}
                             onSelectApp={setSelectedApp}
-                            flagColorClass={getFlagColorClass(app._id)}
+                            flagColorClass={getFlagColorClass(app.flag)}
+                            currentFlag={app.flag || null}
                         />
                     ))
                 ) : (
@@ -221,7 +263,6 @@ export default function ApplicationViewerPage() {
                 )}
             </div>
 
-            {/* Application Details Modal */}
             {selectedApp && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
                     <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
@@ -231,57 +272,83 @@ export default function ApplicationViewerPage() {
                                 <X size={20} />
                             </button>
                         </div>
-                        <div className="p-6 space-y-6 overflow-y-auto">
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <p className="text-xl font-semibold">{selectedApp.applicant.name}</p>
-                                    <p className="text-sm text-gray-500">{selectedApp.applicant.email}</p>
-                                    <p className="text-sm text-gray-500">Submitted: {format(new Date(selectedApp.createdAt), 'dd MMM yyyy, h:mm a')}</p>
+                        <div className="p-6 space-y-6 overflow-y-auto bg-gray-50">
+                            <div className="bg-white p-4 rounded-lg shadow-sm border grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="flex items-center gap-4">
+                                    <UserCircle className="w-12 h-12 text-indigo-500" />
+                                    <div>
+                                        <p className="text-lg font-semibold text-gray-900">{selectedApp.applicant.name}</p>
+                                        <p className="text-sm text-gray-500 flex items-center gap-1.5"><Mail size={14}/> {selectedApp.applicant.email}</p>
+                                        <p className="text-sm text-gray-500 flex items-center gap-1.5"><Calendar size={14}/> Submitted: {format(new Date(selectedApp.createdAt), 'dd MMM yyyy')}</p>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="font-medium">Status:</span>
-                                    <select 
-                                        value={selectedApp.status} 
-                                        onChange={(e) => handleStatusChange(selectedApp._id, e.target.value)}
-                                        className="rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                                    >
-                                        <option>Submitted</option>
-                                        <option>In Review</option>
-                                        <option>Approved</option>
-                                        <option>Rejected</option>
-                                    </select>
+                                <div className="flex flex-col justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-medium text-sm text-gray-600">Status:</span>
+                                        <select 
+                                            value={selectedApp.status} 
+                                            onChange={(e) => handleStatusChange(selectedApp, e.target.value)}
+                                            className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                        >
+                                            <option>Submitted</option>
+                                            <option>In Review</option>
+                                            <option>Approved</option>
+                                            <option>Rejected</option>
+                                        </select>
+                                    </div>
+                                    <div className="text-lg font-semibold text-gray-800 flex items-center justify-between gap-2 bg-indigo-50 p-2 rounded-md">
+                                        <span className="flex items-center gap-2"><Award className="text-indigo-500" /> Total Score:</span>
+                                        <span className="text-2xl font-bold text-indigo-600">{selectedApp.score} / {totalPossiblePoints}</span>
+                                    </div>
                                 </div>
                             </div>
-                             <div className="text-lg font-semibold text-gray-700 flex items-center gap-2 bg-gray-50 p-3 rounded-md">
-                                <Award className="text-yellow-500" />
-                                Total Score: {selectedApp.score} / {totalPossiblePoints}
-                            </div>
-                            <div className="border-t pt-4">
-                                <h4 className="font-semibold mb-2">Application Answers:</h4>
+                            
+                            <div>
+                                <h4 className="font-semibold mb-2 text-gray-700">Application Answers</h4>
                                 <ul className="space-y-4">
                                     {selectedApp.answers.map(answer => (
-                                        <li key={answer._id}>
-                                            <p className="font-medium text-gray-700">{answer.questionText}</p>
-                                            {renderAnswer(answer)}
+                                        <li key={answer._id} className="bg-white p-4 rounded-lg shadow-sm border">
+                                            <p className="font-bold text-gray-800">{answer.questionText}</p>
+                                            <div className="mt-2 border-t pt-2">{renderAnswer(answer)}</div>
                                         </li>
                                     ))}
                                 </ul>
                             </div>
                         </div>
-                        <div className="p-4 border-t bg-gray-50 rounded-b-xl flex justify-end gap-3">
+                        <div className="p-4 border-t bg-gray-100 rounded-b-xl flex justify-end gap-3">
                             <button onClick={() => setSelectedApp(null)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border rounded-md hover:bg-gray-100">
                                 Close
                             </button>
-                             {selectedApp.status !== 'Approved' && selectedApp.status !== 'Rejected' && (
-                                <button onClick={() => handleStatusChange(selectedApp._id, 'Approved')} className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700">
-                                    <CheckCircle size={16} />
-                                    Approve Application
+                             {selectedApp.status === 'Submitted' && (
+                                <button onClick={() => handleStatusChange(selectedApp, 'In Review')} className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
+                                    Move to Review
                                 </button>
+                            )}
+                            {selectedApp.status === 'In Review' && (
+                                <>
+                                <button onClick={() => handleStatusChange(selectedApp, 'Rejected')} className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700">
+                                    <ThumbsDown size={16} />
+                                    Reject
+                                </button>
+                                <button onClick={() => handleStatusChange(selectedApp, 'Approved')} className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700">
+                                    <CheckCircle size={16} />
+                                    Approve
+                                </button>
+                                </>
                             )}
                         </div>
                     </div>
                 </div>
             )}
+            
+            <ConfirmationModal
+                isOpen={isConfirmModalOpen}
+                onClose={() => setIsConfirmModalOpen(false)}
+                onConfirm={() => confirmStatusChange(appToProcess.app._id, appToProcess.newStatus)}
+                title={`Confirm Application ${appToProcess?.newStatus}`}
+            >
+                Are you sure you want to {appToProcess?.newStatus?.toLowerCase()} the application from <strong>{appToProcess?.app.applicant.name}</strong>? This action is final.
+            </ConfirmationModal>
         </div>
     );
 }

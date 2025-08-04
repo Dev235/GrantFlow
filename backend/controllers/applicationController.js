@@ -97,4 +97,28 @@ const updateApplicationStatus = async (req, res) => {
     }
 };
 
-module.exports = { submitApplication, getApplicationsForGrant, getMyApplications, updateApplicationStatus };
+// @desc    Update an application's flag
+// @route   PUT /api/applications/:id/flag
+// @access  Private (Grant Maker, Super Admin)
+const updateApplicationFlag = async (req, res) => {
+    try {
+        const application = await Application.findById(req.params.id);
+        if (!application) {
+            return res.status(404).json({ message: 'Application not found' });
+        }
+
+        // Ensure the user updating the flag is the grant maker
+        if (application.grantMaker.toString() !== req.user._id.toString()) {
+            return res.status(401).json({ message: 'Not authorized' });
+        }
+
+        application.flag = req.body.flag || null;
+        const updatedApplication = await application.save();
+        res.json(updatedApplication);
+    } catch (error) {
+        res.status(400).json({ message: 'Invalid data', error: error.message });
+    }
+};
+
+
+module.exports = { submitApplication, getApplicationsForGrant, getMyApplications, updateApplicationStatus, updateApplicationFlag };

@@ -1,5 +1,6 @@
 // controllers/grantController.js
 const Grant = require('../models/grantModel');
+const Application = require('../models/applicationModel');
 
 // @desc    Fetch all open grants
 // @route   GET /api/grants
@@ -91,5 +92,31 @@ const updateGrant = async (req, res) => {
     }
 };
 
+// @desc    Delete a grant
+// @route   DELETE /api/grants/:id
+// @access  Private (Grant Maker)
+const deleteGrant = async (req, res) => {
+    try {
+        const grant = await Grant.findById(req.params.id);
 
-module.exports = { getOpenGrants, getMyGrants, getGrantById, createGrant, updateGrant };
+        if (grant) {
+            if (grant.grantMaker.toString() !== req.user._id.toString()) {
+                return res.status(401).json({ message: 'Not authorized to delete this grant' });
+            }
+
+            // Also delete all applications associated with this grant
+            await Application.deleteMany({ grant: req.params.id });
+            
+            await Grant.deleteOne({ _id: req.params.id });
+
+            res.json({ message: 'Grant and associated applications removed' });
+        } else {
+            res.status(404).json({ message: 'Grant not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+};
+
+
+module.exports = { getOpenGrants, getMyGrants, getGrantById, createGrant, updateGrant, deleteGrant };

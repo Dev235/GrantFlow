@@ -50,6 +50,12 @@ const applicationSchema = new mongoose.Schema(
         type: Number,
         default: 0,
     },
+    // NEW: Add a flag field for internal review categorization
+    flag: {
+      type: String,
+      enum: ['green', 'orange', 'red', null],
+      default: null,
+    },
     answers: [answerSchema],
   },
   {

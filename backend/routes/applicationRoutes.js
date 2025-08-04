@@ -1,7 +1,7 @@
 // routes/applicationRoutes.js
 const express = require('express');
 const router = express.Router();
-const { submitApplication, getApplicationsForGrant, getMyApplications, updateApplicationStatus } = require('../controllers/applicationController');
+const { submitApplication, getApplicationsForGrant, getMyApplications, updateApplicationStatus, updateApplicationFlag } = require('../controllers/applicationController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 // @route   /api/applications
@@ -17,5 +17,9 @@ router.get('/grant/:grantId', protect, authorize('Grant Maker', 'Super Admin'), 
 
 // Grant Maker: Update the status of an application
 router.put('/:id/status', protect, authorize('Grant Maker', 'Super Admin'), updateApplicationStatus);
+
+// Grant Maker: Update the flag of an application
+router.put('/:id/flag', protect, authorize('Grant Maker', 'Super Admin'), updateApplicationFlag);
+
 
 module.exports = router;

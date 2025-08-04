@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
-import { PlusCircle, Edit } from 'lucide-react';
+import { PlusCircle, Edit, Trash2 } from 'lucide-react';
+import ConfirmationModal from '../components/common/ConfirmationModal';
 
 export default function ManageGrantsPage() {
     const [myGrants, setMyGrants] = useState([]);
@@ -11,6 +12,8 @@ export default function ManageGrantsPage() {
     const [error, setError] = useState('');
     const { user } = useAuth();
     const navigate = useNavigate();
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [grantToDelete, setGrantToDelete] = useState(null);
 
     useEffect(() => {
         const fetchMyGrants = async () => {
@@ -35,6 +38,33 @@ export default function ManageGrantsPage() {
 
         fetchMyGrants();
     }, [user]);
+
+    const handleDeleteClick = (grant) => {
+        setGrantToDelete(grant);
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!grantToDelete) return;
+        try {
+            const response = await fetch(`http://localhost:5000/api/grants/${grantToDelete._id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${user.token}`,
+                },
+            });
+            if (!response.ok) {
+                throw new Error('Failed to delete grant.');
+            }
+            // Remove the deleted grant from the local state
+            setMyGrants(myGrants.filter(g => g._id !== grantToDelete._id));
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setIsDeleteModalOpen(false);
+            setGrantToDelete(null);
+        }
+    };
 
     if (loading) return <div>Loading your grants...</div>;
     if (error) return <div className="text-red-500">{error}</div>;
@@ -64,9 +94,11 @@ export default function ManageGrantsPage() {
                                 </div>
                                 <div className="flex items-center gap-2">
                                      <button onClick={() => navigate(`/manage/applications/${grant._id}`)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border rounded-md hover:bg-gray-100">View Applications</button>
-                                     {/* UPDATED: Navigate to the new edit page */}
                                      <button onClick={() => navigate(`/manage/grants/edit/${grant._id}`)} className="px-4 py-2 text-sm font-medium text-white bg-indigo-500 rounded-md hover:bg-indigo-600 inline-flex items-center gap-1">
                                         <Edit size={16}/> Edit
+                                     </button>
+                                     <button onClick={() => handleDeleteClick(grant)} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 inline-flex items-center gap-1">
+                                        <Trash2 size={16}/> Remove
                                      </button>
                                 </div>
                             </li>
@@ -79,6 +111,14 @@ export default function ManageGrantsPage() {
                     <p className="text-gray-500 mt-2">Get started by creating your first funding opportunity.</p>
                 </div>
             )}
+            <ConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={confirmDelete}
+                title="Confirm Grant Deletion"
+            >
+                Are you sure you want to delete the grant "<strong>{grantToDelete?.title}</strong>"? This will also remove all associated applications and cannot be undone.
+            </ConfirmationModal>
         </div>
     );
 }
