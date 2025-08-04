@@ -1,11 +1,12 @@
 // controllers/dashboardController.js
 const Grant = require('../models/grantModel');
 const Application = require('../models/applicationModel');
+const User = require('../models/userModel');
 const mongoose = require('mongoose');
 
 // @desc    Get stats for the Grant Maker dashboard
 // @route   GET /api/dashboard/grantmaker
-// @access  Private (Grant Maker, Super Admin)
+// @access  Private (Grant Maker)
 const getGrantMakerStats = async (req, res) => {
     try {
         const userId = req.user._id;
@@ -24,7 +25,6 @@ const getGrantMakerStats = async (req, res) => {
         ]);
         const totalAwarded = awardedData.length > 0 ? awardedData[0].total : 0;
 
-        // Data for charts
         const applicationsByCategory = await Grant.aggregate([
              { $match: { grantMaker: new mongoose.Types.ObjectId(userId) } },
              { $lookup: { from: 'applications', localField: '_id', foreignField: 'grant', as: 'apps'}},
@@ -66,5 +66,39 @@ const getApplicantStats = async (req, res) => {
     }
 };
 
+// @desc    Get platform-wide stats for the Super Admin dashboard
+// @route   GET /api/dashboard/superadmin
+// @access  Private (Super Admin)
+const getSuperAdminStats = async (req, res) => {
+    try {
+        const totalUsers = await User.countDocuments();
+        const totalApplicants = await User.countDocuments({ role: 'Applicant' });
+        const totalGrantMakers = await User.countDocuments({ role: 'Grant Maker' });
+        const totalGrants = await Grant.countDocuments();
+        const totalApplications = await Application.countDocuments();
+        
+        const awardedData = await Application.aggregate([
+            { $match: { status: 'Approved' } },
+            { $lookup: { from: 'grants', localField: 'grant', foreignField: '_id', as: 'grantDetails' } },
+            { $unwind: '$grantDetails' },
+            { $group: { _id: null, total: { $sum: '$grantDetails.amount' } } }
+        ]);
+        const totalAwarded = awardedData.length > 0 ? awardedData[0].total : 0;
 
-module.exports = { getGrantMakerStats, getApplicantStats };
+        res.json({
+            totalUsers,
+            totalApplicants,
+            totalGrantMakers,
+            totalGrants,
+            totalApplications,
+            totalAwarded,
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error while fetching Super Admin stats." });
+    }
+};
+
+
+module.exports = { getGrantMakerStats, getApplicantStats, getSuperAdminStats };

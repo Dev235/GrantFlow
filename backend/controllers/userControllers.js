@@ -1,8 +1,5 @@
-// backend/routes/userRoutes.js
-const express = require('express');
-const router = express.Router();
-const User = require('../models/userModel'); // Import User model
-const { protect, authorize } = require('../middleware/authMiddleware');
+// backend/controllers/userController.js
+const User = require('../models/userModel');
 
 // @desc    Get user profile
 // @route   GET /api/users/profile
@@ -32,7 +29,4 @@ const getAllUsers = async (req, res) => {
     }
 };
 
-router.get('/profile', protect, getUserProfile);
-router.get('/', protect, authorize('Super Admin'), getAllUsers);
-
-module.exports = router;
+module.exports = { getUserProfile, getAllUsers };

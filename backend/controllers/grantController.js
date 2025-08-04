@@ -16,13 +16,25 @@ const getOpenGrants = async (req, res) => {
 
 // @desc    Fetch grants created by the logged-in Grant Maker
 // @route   GET /api/grants/mygrants
-// @access  Private (Grant Maker, Super Admin)
+// @access  Private (Grant Maker)
 const getMyGrants = async (req, res) => {
     try {
         const grants = await Grant.find({ grantMaker: req.user._id }).sort({ createdAt: -1 });
         res.json(grants);
     } catch (error) {
         res.status(500).json({ message: 'Server Error: Could not fetch your grants.' });
+    }
+};
+
+// @desc    Fetch all grants on the platform
+// @route   GET /api/grants/all
+// @access  Private (Super Admin)
+const getAllGrants = async (req, res) => {
+    try {
+        const grants = await Grant.find({}).populate('grantMaker', 'name email').sort({ createdAt: -1 });
+        res.json(grants);
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error: Could not fetch all grants.' });
     }
 };
 
@@ -61,15 +73,15 @@ const createGrant = async (req, res) => {
 
 // @desc    Update a grant
 // @route   PUT /api/grants/:id
-// @access  Private (Grant Maker)
+// @access  Private (Grant Maker or Super Admin)
 const updateGrant = async (req, res) => {
     const { title, description, amount, category, deadline, status, applicationQuestions } = req.body;
     try {
         const grant = await Grant.findById(req.params.id);
 
         if (grant) {
-            // Check if the user is the owner of the grant
-            if (grant.grantMaker.toString() !== req.user._id.toString()) {
+            // Allow edit if user is the owner OR a Super Admin
+            if (grant.grantMaker.toString() !== req.user._id.toString() && req.user.role !== 'Super Admin') {
                 return res.status(401).json({ message: 'Not authorized to edit this grant' });
             }
 
@@ -94,19 +106,18 @@ const updateGrant = async (req, res) => {
 
 // @desc    Delete a grant
 // @route   DELETE /api/grants/:id
-// @access  Private (Grant Maker)
+// @access  Private (Grant Maker or Super Admin)
 const deleteGrant = async (req, res) => {
     try {
         const grant = await Grant.findById(req.params.id);
 
         if (grant) {
-            if (grant.grantMaker.toString() !== req.user._id.toString()) {
+            // Allow delete if user is the owner OR a Super Admin
+            if (grant.grantMaker.toString() !== req.user._id.toString() && req.user.role !== 'Super Admin') {
                 return res.status(401).json({ message: 'Not authorized to delete this grant' });
             }
 
-            // Also delete all applications associated with this grant
             await Application.deleteMany({ grant: req.params.id });
-            
             await Grant.deleteOne({ _id: req.params.id });
 
             res.json({ message: 'Grant and associated applications removed' });
@@ -119,4 +130,4 @@ const deleteGrant = async (req, res) => {
 };
 
 
-module.exports = { getOpenGrants, getMyGrants, getGrantById, createGrant, updateGrant, deleteGrant };
+module.exports = { getOpenGrants, getMyGrants, getAllGrants, getGrantById, createGrant, updateGrant, deleteGrant };

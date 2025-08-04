@@ -11,13 +11,14 @@ import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import GrantsPage from './pages/GrantsPage';
 import CreateGrantPage from './pages/CreateGrantPage';
-import EditGrantPage from './pages/EditGrantPage'; // Import the new page
+import EditGrantPage from './pages/EditGrantPage';
 import ManageGrantsPage from './pages/ManageGrantsPage';
 import ApplyGrantPage from './pages/ApplyGrantPage';
 import MyApplicationsPage from './pages/MyApplicationsPage';
 import NotFoundPage from './pages/NotFoundPage';
 import GrantDetailsPage from './pages/GrantDetailsPage';
 import ApplicationViewerPage from './pages/ApplicationViewerPage';
+import UserManagementPage from './pages/UserManagementPage'; // Import the new page
 
 // Component Imports
 import Navbar from './components/common/Navbar';
@@ -43,7 +44,6 @@ const AppContent = () => {
     const { user } = useAuth();
     const location = useLocation();
     
-    // Don't show Navbar and Footer on login/register pages
     const showLayout = !['/login', '/register'].includes(location.pathname);
 
     return (
@@ -65,19 +65,20 @@ const AppContent = () => {
                     <Route path="/applications" element={<ProtectedRoute roles={['Applicant']}><MyApplicationsPage /></ProtectedRoute>} />
                     <Route path="/grants/:id/apply" element={<ProtectedRoute roles={['Applicant']}><ApplyGrantPage /></ProtectedRoute>} />
 
-                    {/* Grant Maker & Admin Routes */}
+                    {/* Grant Maker Routes */}
                     <Route path="/manage/create" element={<ProtectedRoute roles={['Grant Maker', 'Super Admin']}><CreateGrantPage /></ProtectedRoute>} />
                     <Route path="/manage/grants" element={<ProtectedRoute roles={['Grant Maker', 'Super Admin']}><ManageGrantsPage /></ProtectedRoute>} />
-                    {/* NEW: Add the route for editing a grant */}
                     <Route path="/manage/grants/edit/:id" element={<ProtectedRoute roles={['Grant Maker', 'Super Admin']}><EditGrantPage /></ProtectedRoute>} />
                     <Route path="/manage/applications/:grantId" element={<ProtectedRoute roles={['Grant Maker', 'Super Admin']}><ApplicationViewerPage /></ProtectedRoute>} />
+
+                    {/* Super Admin Routes */}
+                    <Route path="/admin/users" element={<ProtectedRoute roles={['Super Admin']}><UserManagementPage /></ProtectedRoute>} />
 
                     {/* Fallback Route */}
                     <Route path="*" element={<NotFoundPage />} />
                 </Routes>
             </main>
             {showLayout && <Footer />}
-            {/* Show chatbot only for logged-in Applicants */}
             {user && user.role === 'Applicant' && <Chatbot />}
         </>
     );

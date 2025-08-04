@@ -26,8 +26,9 @@ export default function Navbar() {
     ];
 
     const superAdminLinks = [
-        ...grantMakerLinks,
-        // { name: 'User Management', path: '/admin/users', icon: <Users size={18}/> }, // Example for future
+        { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={18}/> },
+        { name: 'User Management', path: '/admin/users', icon: <Users size={18}/> },
+        { name: 'Manage All Grants', path: '/manage/grants', icon: <FolderKanban size={18}/> },
     ];
 
     const getNavLinks = () => {

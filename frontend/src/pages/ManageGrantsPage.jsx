@@ -3,11 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
-import { PlusCircle, Edit, Trash2 } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, User } from 'lucide-react';
 import ConfirmationModal from '../components/common/ConfirmationModal';
 
 export default function ManageGrantsPage() {
-    const [myGrants, setMyGrants] = useState([]);
+    const [grants, setGrants] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const { user } = useAuth();
@@ -15,20 +15,25 @@ export default function ManageGrantsPage() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [grantToDelete, setGrantToDelete] = useState(null);
 
+    const isSuperAdmin = user?.role === 'Super Admin';
+
     useEffect(() => {
-        const fetchMyGrants = async () => {
+        const fetchGrants = async () => {
             if (!user?.token) return;
+
+            const endpoint = isSuperAdmin ? 'all' : 'mygrants';
+            
             try {
-                const response = await fetch('http://localhost:5000/api/grants/mygrants', {
+                const response = await fetch(`http://localhost:5000/api/grants/${endpoint}`, {
                     headers: {
                         'Authorization': `Bearer ${user.token}`,
                     },
                 });
                 if (!response.ok) {
-                    throw new Error('Failed to fetch your grants.');
+                    throw new Error('Failed to fetch grants.');
                 }
                 const data = await response.json();
-                setMyGrants(data);
+                setGrants(data);
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -36,8 +41,8 @@ export default function ManageGrantsPage() {
             }
         };
 
-        fetchMyGrants();
-    }, [user]);
+        fetchGrants();
+    }, [user, isSuperAdmin]);
 
     const handleDeleteClick = (grant) => {
         setGrantToDelete(grant);
@@ -56,8 +61,7 @@ export default function ManageGrantsPage() {
             if (!response.ok) {
                 throw new Error('Failed to delete grant.');
             }
-            // Remove the deleted grant from the local state
-            setMyGrants(myGrants.filter(g => g._id !== grantToDelete._id));
+            setGrants(grants.filter(g => g._id !== grantToDelete._id));
         } catch (err) {
             setError(err.message);
         } finally {
@@ -66,30 +70,37 @@ export default function ManageGrantsPage() {
         }
     };
 
-    if (loading) return <div>Loading your grants...</div>;
+    if (loading) return <div>Loading grants...</div>;
     if (error) return <div className="text-red-500">{error}</div>;
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-gray-800">Manage Your Grants</h1>
-                <Link to="/manage/create" className="inline-flex items-center gap-2 px-4 py-2 text-white bg-indigo-600 rounded-lg font-semibold hover:bg-indigo-700">
-                    <PlusCircle size={20} />
-                    Create New Grant
-                </Link>
+                <h1 className="text-3xl font-bold text-gray-800">
+                    {isSuperAdmin ? 'Manage All Grants' : 'Manage Your Grants'}
+                </h1>
+                {user && user.role === 'Grant Maker' && (
+                    <Link to="/manage/create" className="inline-flex items-center gap-2 px-4 py-2 text-white bg-indigo-600 rounded-lg font-semibold hover:bg-indigo-700">
+                        <PlusCircle size={20} />
+                        Create New Grant
+                    </Link>
+                )}
             </div>
 
-            {myGrants.length > 0 ? (
+            {grants.length > 0 ? (
                 <div className="bg-white p-4 rounded-xl shadow-md">
                     <ul className="divide-y divide-gray-200">
-                        {myGrants.map(grant => (
+                        {grants.map(grant => (
                             <li key={grant._id} className="p-4 flex flex-col md:flex-row justify-between items-start md:items-center hover:bg-gray-50">
                                 <div className="flex-1 mb-4 md:mb-0">
                                     <p className="text-lg font-semibold text-gray-900">{grant.title}</p>
-                                    <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
+                                    <div className="flex items-center flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500 mt-1">
                                         <span>Status: <span className={`font-medium ${grant.status === 'Open' ? 'text-green-600' : 'text-red-600'}`}>{grant.status}</span></span>
                                         <span>Deadline: {format(new Date(grant.deadline), 'dd MMM yyyy')}</span>
                                         <span>Amount: RM{grant.amount.toLocaleString()}</span>
+                                        {isSuperAdmin && grant.grantMaker && (
+                                            <span className="flex items-center gap-1"><User size={14}/> {grant.grantMaker.name}</span>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -107,8 +118,8 @@ export default function ManageGrantsPage() {
                 </div>
             ) : (
                 <div className="text-center py-10 bg-white rounded-xl shadow-md">
-                    <h3 className="text-xl font-semibold text-gray-700">No Grants Created Yet</h3>
-                    <p className="text-gray-500 mt-2">Get started by creating your first funding opportunity.</p>
+                    <h3 className="text-xl font-semibold text-gray-700">No Grants Found</h3>
+                    <p className="text-gray-500 mt-2">{isSuperAdmin ? 'There are no grants on the platform yet.' : "You haven't created any grants yet."}</p>
                 </div>
             )}
             <ConfirmationModal
