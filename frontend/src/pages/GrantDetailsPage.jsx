@@ -11,6 +11,7 @@ export default function GrantDetailsPage() {
     const [grant, setGrant] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const isVerified = user?.verificationStatus === 'Verified';
 
     useEffect(() => {
         const fetchGrant = async () => {
@@ -64,10 +65,19 @@ export default function GrantDetailsPage() {
                     </ul>
                 </div>
                 {user && user.role === 'Applicant' && (
-                    <div className="mt-8 text-center">
-                        <Link to={`/grants/${id}/apply`} className="w-full md:w-auto inline-block px-10 py-3 text-white bg-green-600 rounded-lg font-semibold hover:bg-green-700 text-lg">
+                    <div className="mt-8 text-center relative group">
+                        <Link 
+                            to={`/grants/${id}/apply`} 
+                            className={`w-full md:w-auto inline-block px-10 py-3 text-white bg-green-600 rounded-lg font-semibold text-lg ${!isVerified ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-700'}`}
+                            onClick={(e) => !isVerified && e.preventDefault()}
+                        >
                             Apply Now
                         </Link>
+                        {!isVerified && (
+                             <div className="absolute bottom-full mb-2 w-max left-1/2 -translate-x-1/2 px-3 py-1 bg-gray-700 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+                                Your account must be verified to apply. Please complete your profile.
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { UploadCloud, CheckCircle, AlertCircle } from 'lucide-react';
 
@@ -35,6 +35,19 @@ export default function ApplyGrantPage() {
         };
         fetchGrant();
     }, [grantId]);
+
+    if (user && user.verificationStatus !== 'Verified') {
+        return (
+            <div className="text-center py-20 bg-white rounded-xl shadow-md">
+                <AlertCircle className="mx-auto text-red-500" size={48} />
+                <h2 className="mt-4 text-2xl font-bold text-gray-800">Account Not Verified</h2>
+                <p className="mt-2 text-gray-600">You must complete your profile and be verified by an administrator before you can apply for grants.</p>
+                <Link to="/profile" className="mt-6 inline-block px-6 py-2 text-white bg-indigo-600 rounded-lg font-semibold hover:bg-indigo-700">
+                    Go to Profile
+                </Link>
+            </div>
+        );
+    }
 
     const handleAnswerChange = (questionId, value) => {
         setAnswers(prev => ({ ...prev, [questionId]: value }));

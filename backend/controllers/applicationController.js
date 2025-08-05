@@ -8,6 +8,9 @@ const { logAction } = require('../utils/auditLogger');
 // @route   POST /api/applications/:grantId
 // @access  Private (Applicant)
 const submitApplication = async (req, res) => {
+    if (req.user.verificationStatus !== 'Verified') {
+        return res.status(403).json({ message: 'Your account must be verified to apply for grants.' });
+    }
     const { grantId } = req.params;
     const { answers } = req.body;
     try {

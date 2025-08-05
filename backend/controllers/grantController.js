@@ -60,6 +60,9 @@ const getGrantById = async (req, res) => {
 // @route   POST /api/grants
 // @access  Private (Grant Maker)
 const createGrant = async (req, res) => {
+  if (req.user.verificationStatus !== 'Verified') {
+    return res.status(403).json({ message: 'Your account must be verified to create grants.' });
+  }
   const { title, description, amount, category, deadline, applicationQuestions } = req.body;
   try {
     const grant = new Grant({

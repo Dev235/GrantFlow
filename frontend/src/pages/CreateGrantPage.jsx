@@ -1,8 +1,8 @@
 // frontend/src/pages/CreateGrantPage.jsx
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { PlusCircle, Trash2, Award } from 'lucide-react';
+import { PlusCircle, Trash2, Award, AlertCircle } from 'lucide-react';
 
 export default function CreateGrantPage() {
     const { user } = useAuth();
@@ -18,13 +18,26 @@ export default function CreateGrantPage() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
-    // Malaysian-centric preset questions with default points
+    if (user && user.verificationStatus !== 'Verified') {
+        return (
+            <div className="text-center py-20 bg-white rounded-xl shadow-md">
+                <AlertCircle className="mx-auto text-red-500" size={48} />
+                <h2 className="mt-4 text-2xl font-bold text-gray-800">Account Not Verified</h2>
+                <p className="mt-2 text-gray-600">You must complete your profile and be verified by an administrator before you can create grants.</p>
+                <Link to="/profile" className="mt-6 inline-block px-6 py-2 text-white bg-indigo-600 rounded-lg font-semibold hover:bg-indigo-700">
+                    Go to Profile
+                </Link>
+            </div>
+        );
+    }
+
+    // Updated preset questions to be generic and in English
     const presetQuestions = [
-        { questionText: "Sila terangkan latar belakang organisasi anda. (Please describe your organization's background.)", questionType: 'textarea', isRequired: true, points: 10 },
-        { questionText: "Apakah masalah yang cuba diselesaikan oleh projek ini di Malaysia? (What problem is this project trying to solve in Malaysia?)", questionType: 'textarea', isRequired: true, points: 20 },
-        { questionText: "Sila berikan butiran bajet untuk projek ini dalam Ringgit Malaysia (MYR).", questionType: 'textarea', isRequired: true, points: 15 },
-        { questionText: "Bagaimanakah anda akan mengukur impak dan kejayaan projek ini?", questionType: 'textarea', isRequired: true, points: 15 },
-        { questionText: "Muat naik salinan pendaftaran Suruhanjaya Syarikat Malaysia (SSM) atau Pendaftar Pertubuhan (ROS) anda.", questionType: 'file', isRequired: true, points: 5 },
+        { questionText: "Please describe your organization's background and mission.", questionType: 'textarea', isRequired: true, points: 10 },
+        { questionText: "What is the primary goal of this project?", questionType: 'textarea', isRequired: true, points: 20 },
+        { questionText: "Provide a detailed budget breakdown for this project.", questionType: 'textarea', isRequired: true, points: 15 },
+        { questionText: "How will you measure the success and impact of this project?", questionType: 'textarea', isRequired: true, points: 15 },
+        { questionText: "Upload your organization's registration document.", questionType: 'file', isRequired: true, points: 5 },
     ];
 
     const handleGrantChange = (e) => {
@@ -103,7 +116,7 @@ export default function CreateGrantPage() {
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Category</label>
-                            <input type="text" name="category" value={grant.category} onChange={handleGrantChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="e.g., Pendidikan, Kesenian" required />
+                            <input type="text" name="category" value={grant.category} onChange={handleGrantChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="e.g., Education, Arts" required />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Application Deadline</label>
@@ -115,7 +128,7 @@ export default function CreateGrantPage() {
                 <div className="space-y-4">
                     <h2 className="text-xl font-semibold text-gray-700 border-b pb-2">Application Form Builder</h2>
                     <div>
-                        <h3 className="text-lg font-medium text-gray-600 mb-2">Recommended Malaysian Questions</h3>
+                        <h3 className="text-lg font-medium text-gray-600 mb-2">Recommended Questions</h3>
                         <div className="flex flex-wrap gap-2">
                             {presetQuestions.map((q, i) => (
                                 <button type="button" key={i} onClick={() => addPresetQuestion(q)} className="px-3 py-1 bg-teal-100 text-teal-800 text-sm rounded-full hover:bg-teal-200 transition-colors">
