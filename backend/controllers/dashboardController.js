@@ -77,6 +77,10 @@ const getSuperAdminStats = async (req, res) => {
         const totalGrants = await Grant.countDocuments();
         const totalApplications = await Application.countDocuments();
         
+        // --- NEW STATS ---
+        const verifiedUsers = await User.countDocuments({ verificationStatus: 'Verified' });
+        const unverifiedUsers = await User.countDocuments({ verificationStatus: { $in: ['Unverified', 'Pending'] } });
+
         const awardedData = await Application.aggregate([
             { $match: { status: 'Approved' } },
             { $lookup: { from: 'grants', localField: 'grant', foreignField: '_id', as: 'grantDetails' } },
@@ -92,6 +96,8 @@ const getSuperAdminStats = async (req, res) => {
             totalGrants,
             totalApplications,
             totalAwarded,
+            verifiedUsers,
+            unverifiedUsers
         });
 
     } catch (error) {

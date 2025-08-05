@@ -1,24 +1,66 @@
 // backend/controllers/userController.js
 const User = require('../models/userModel');
 const { logAction } = require('../utils/auditLogger');
+const generateToken = require('../utils/generateToken'); // <-- FIX: Added this import
 
 // @desc    Get user profile
 // @route   GET /api/users/profile
 // @access  Private
 const getUserProfile = async (req, res) => {
-    if (req.user) {
-        res.json({
-            _id: req.user._id,
-            name: req.user.name,
-            email: req.user.email,
-            role: req.user.role,
-        });
-    } else {
-        res.status(404).json({ message: 'User not found' });
+    try {
+        const user = await User.findById(req.user._id).select('-password');
+        if (user) {
+            res.json(user);
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error' });
     }
 };
 
-// @desc    Get all users
+// @desc    Update user profile
+// @route   PUT /api/users/profile
+// @access  Private
+const updateUserProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+
+        if (user) {
+            user.name = req.body.name || user.name;
+            if (req.body.password) {
+                user.password = req.body.password;
+            }
+
+            // Update profile sub-document
+            const profileData = req.body.profile || {};
+            Object.assign(user.profile, profileData);
+
+            // If profile is submitted and status is Unverified, set status to Pending
+            if (user.verificationStatus === 'Unverified' && profileData.icNumber && profileData.icPictureUrl) {
+                user.verificationStatus = 'Pending';
+            }
+
+            const updatedUser = await user.save();
+            res.json({
+                _id: updatedUser._id,
+                name: updatedUser.name,
+                email: updatedUser.email,
+                role: updatedUser.role,
+                verificationStatus: updatedUser.verificationStatus,
+                profile: updatedUser.profile,
+                token: generateToken(updatedUser._id), // This will now work
+            });
+
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    } catch (error) {
+        res.status(400).json({ message: 'Error updating profile', error: error.message });
+    }
+};
+
+// @desc    Get all users for Super Admin
 // @route   GET /api/users
 // @access  Private (Super Admin)
 const getAllUsers = async (req, res) => {
@@ -50,7 +92,9 @@ const createUser = async (req, res) => {
                 name: newUser.name,
                 email: newUser.email,
                 role: newUser.role,
-                createdAt: newUser.createdAt
+                createdAt: newUser.createdAt,
+                verificationStatus: newUser.verificationStatus,
+                profile: newUser.profile
             });
         } else {
             res.status(400).json({ message: 'Invalid user data' });
@@ -84,5 +128,25 @@ const deleteUser = async (req, res) => {
     }
 };
 
+// @desc    Verify a user
+// @route   PUT /api/users/:id/verify
+// @access  Private (Super Admin)
+const verifyUser = async (req, res) => {
+    try {
+        const userToVerify = await User.findById(req.params.id);
 
-module.exports = { getUserProfile, getAllUsers, createUser, deleteUser };
+        if (userToVerify) {
+            userToVerify.verificationStatus = 'Verified';
+            await userToVerify.save();
+            // Optionally: log this action
+            res.json({ message: 'User has been verified.' });
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: 'Server error while verifying user.' });
+    }
+};
+
+
+module.exports = { getUserProfile, updateUserProfile, getAllUsers, createUser, deleteUser, verifyUser };

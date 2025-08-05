@@ -2,7 +2,17 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LogOut, LayoutDashboard, FileText, Edit, FolderKanban, UserCircle, Users, History } from 'lucide-react';
+import { LogOut, LayoutDashboard, FileText, Edit, FolderKanban, UserCircle, Users, History, AlertCircle, CheckCircle } from 'lucide-react';
+
+const VerificationStatus = ({ status }) => {
+    if (status === 'Verified') {
+        return <CheckCircle size={16} className="text-green-500" title="Verified" />;
+    }
+    const tooltip = status === 'Pending' 
+        ? 'Verification pending admin approval. You can still edit your profile.' 
+        : 'Unverified. Please complete your profile information.';
+    return <AlertCircle size={16} className="text-yellow-500" title={tooltip} />;
+};
 
 export default function Navbar() {
     const { user, logout } = useAuth();
@@ -48,14 +58,10 @@ export default function Navbar() {
     const getNavLinks = () => {
         if (!user) return [];
         switch (user.role) {
-            case 'Applicant':
-                return applicantLinks;
-            case 'Grant Maker':
-                return grantMakerLinks;
-            case 'Super Admin':
-                return superAdminLinks;
-            default:
-                return [];
+            case 'Applicant': return applicantLinks;
+            case 'Grant Maker': return grantMakerLinks;
+            case 'Super Admin': return superAdminLinks;
+            default: return [];
         }
     };
     
@@ -81,11 +87,15 @@ export default function Navbar() {
                     <div className="flex items-center space-x-4">
                         {user ? (
                             <>
-                                <div className="flex items-center gap-2">
-                                   <UserCircle className="text-gray-500" />
+                                <Link to="/profile" className="flex items-center gap-2 cursor-pointer p-2 rounded-md hover:bg-gray-100">
+                                   <img 
+                                        src={user.profile?.profilePictureUrl ? `http://localhost:5000${user.profile.profilePictureUrl}` : `https://ui-avatars.com/api/?name=${user.name}&background=random&color=fff`} 
+                                        alt="Profile" 
+                                        className="w-8 h-8 rounded-full object-cover"
+                                    />
                                    <span className="text-gray-700 font-medium hidden sm:block">{user.name}</span>
-                                   <span className="text-xs bg-gray-200 text-gray-600 font-semibold px-2 py-1 rounded-full hidden lg:block">{user.role}</span>
-                                </div>
+                                   {user.role !== 'Super Admin' && <VerificationStatus status={user.verificationStatus} />}
+                                </Link>
                                 <button onClick={handleLogout} className="p-2 rounded-full text-gray-500 hover:bg-red-100 hover:text-red-600" aria-label="Logout">
                                     <LogOut size={20} />
                                 </button>

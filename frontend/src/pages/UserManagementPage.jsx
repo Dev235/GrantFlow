@@ -1,8 +1,8 @@
 // frontend/src/pages/UserManagementPage.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
-import { User, Briefcase, Shield, PlusCircle, Trash2 } from 'lucide-react';
+import { User, Briefcase, Shield, PlusCircle, Trash2, CheckCircle, AlertCircle, Eye, X } from 'lucide-react';
 import ConfirmationModal from '../components/common/ConfirmationModal';
 
 // AddUserModal Component
@@ -38,6 +38,16 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
             setLoading(false);
         }
     };
+    
+    useEffect(() => {
+        if (!isOpen) {
+            setName('');
+            setEmail('');
+            setPassword('');
+            setRole('Applicant');
+            setError('');
+        }
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
@@ -79,6 +89,65 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
     );
 };
 
+// ViewUserModal Component
+const ViewUserModal = ({ user, isOpen, onClose, onVerify }) => {
+    if (!isOpen || !user) return null;
+
+    const DetailItem = ({ label, value }) => (
+        <div>
+            <p className="text-sm text-gray-500">{label}</p>
+            <p className="font-medium text-gray-800">{value || 'N/A'}</p>
+        </div>
+    );
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4" onClick={onClose}>
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                <div className="flex justify-between items-center p-4 border-b">
+                    <h3 className="text-xl font-bold text-gray-900">User Details</h3>
+                    <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-200"><X size={20} /></button>
+                </div>
+                <div className="p-6 overflow-y-auto space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="md:col-span-1 flex flex-col items-center">
+                            <img src={user.profile?.profilePictureUrl ? `http://localhost:5000${user.profile.profilePictureUrl}` : `https://ui-avatars.com/api/?name=${user.name}&background=random&color=fff`} alt="Profile" className="w-32 h-32 rounded-full object-cover" />
+                        </div>
+                        <div className="md:col-span-2 grid grid-cols-2 gap-4">
+                           <DetailItem label="Full Name" value={user.name} />
+                           <DetailItem label="Email" value={user.email} />
+                           <DetailItem label="Role" value={user.role} />
+                           <DetailItem label="Verification" value={user.verificationStatus} />
+                           <DetailItem label="IC Number" value={user.profile?.icNumber} />
+                           <DetailItem label="Age" value={user.profile?.age} />
+                           <DetailItem label="Gender" value={user.profile?.gender} />
+                           <DetailItem label="Race" value={user.profile?.race} />
+                           <DetailItem label="Income Group" value={user.profile?.incomeGroup} />
+                           <DetailItem label="Income (MYR)" value={user.profile?.income?.toLocaleString()} />
+                           <DetailItem label="Emergency Contact" value={user.profile?.emergencyContact} />
+                           <DetailItem label="Address" value={user.profile?.address} />
+                        </div>
+                    </div>
+                    <div>
+                        <h4 className="font-semibold text-gray-700 mb-2">IC Picture</h4>
+                        {user.profile?.icPictureUrl ? (
+                             <img src={`http://localhost:5000${user.profile.icPictureUrl}`} alt="IC" className="rounded-lg border max-w-sm" />
+                        ) : <p className="text-gray-500">Not provided.</p>}
+                    </div>
+                </div>
+                 <div className="p-4 border-t bg-gray-50 flex justify-end gap-3">
+                    <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border rounded-md hover:bg-gray-100">Close</button>
+                    {user.verificationStatus === 'Pending' && (
+                        <button onClick={() => onVerify(user)} className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 inline-flex items-center gap-2">
+                            <CheckCircle size={16} /> Verify User
+                        </button>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
 export default function UserManagementPage() {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -86,7 +155,9 @@ export default function UserManagementPage() {
     const { user: currentUser } = useAuth();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [userToDelete, setUserToDelete] = useState(null);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+    const [userToProcess, setUserToProcess] = useState(null);
+    const [filter, setFilter] = useState('All');
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -112,14 +183,19 @@ export default function UserManagementPage() {
     };
     
     const handleDeleteClick = (user) => {
-        setUserToDelete(user);
+        setUserToProcess(user);
         setIsDeleteModalOpen(true);
     };
 
+    const handleViewUserClick = (user) => {
+        setUserToProcess(user);
+        setIsViewModalOpen(true);
+    };
+
     const confirmDelete = async () => {
-        if (!userToDelete) return;
+        if (!userToProcess) return;
         try {
-            const response = await fetch(`http://localhost:5000/api/users/${userToDelete._id}`, {
+            const response = await fetch(`http://localhost:5000/api/users/${userToProcess._id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${currentUser.token}` },
             });
@@ -127,12 +203,25 @@ export default function UserManagementPage() {
                 const data = await response.json();
                 throw new Error(data.message || 'Failed to delete user.');
             }
-            setUsers(users.filter(u => u._id !== userToDelete._id));
+            setUsers(users.filter(u => u._id !== userToProcess._id));
         } catch (err) {
             setError(err.message);
         } finally {
             setIsDeleteModalOpen(false);
-            setUserToDelete(null);
+            setUserToProcess(null);
+        }
+    };
+
+    const handleVerifyUser = async (userToVerify) => {
+        try {
+            await fetch(`http://localhost:5000/api/users/${userToVerify._id}/verify`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${currentUser.token}` },
+            });
+            setUsers(users.map(u => u._id === userToVerify._id ? { ...u, verificationStatus: 'Verified' } : u));
+            setIsViewModalOpen(false);
+        } catch (err) {
+            setError(err.message);
         }
     };
 
@@ -145,6 +234,20 @@ export default function UserManagementPage() {
         }
     };
 
+    const getStatusIndicator = (status) => {
+        switch (status) {
+            case 'Verified': return <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Verified</span>;
+            case 'Pending': return <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Pending</span>;
+            case 'Unverified': return <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Unverified</span>;
+            default: return null;
+        }
+    };
+
+    const filteredUsers = useMemo(() => {
+        if (filter === 'All') return users;
+        return users.filter(u => u.verificationStatus === filter);
+    }, [users, filter]);
+
     if (loading) return <div>Loading users...</div>;
     if (error) return <div className="text-red-500 bg-red-50 p-3 rounded-md">{error}</div>;
 
@@ -156,6 +259,15 @@ export default function UserManagementPage() {
                     <PlusCircle size={20} /> Add New User
                 </button>
             </div>
+            <div className="bg-white p-4 rounded-xl shadow-md">
+                <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-medium text-sm text-gray-600">Filter by status:</p>
+                    <button onClick={() => setFilter('All')} className={`px-3 py-1 text-sm rounded-full ${filter === 'All' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}>All</button>
+                    <button onClick={() => setFilter('Verified')} className={`px-3 py-1 text-sm rounded-full ${filter === 'Verified' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}>Verified</button>
+                    <button onClick={() => setFilter('Pending')} className={`px-3 py-1 text-sm rounded-full ${filter === 'Pending' ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}>Pending for Verification</button>
+                    <button onClick={() => setFilter('Unverified')} className={`px-3 py-1 text-sm rounded-full ${filter === 'Unverified' ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}>Unverified</button>
+                </div>
+            </div>
             <div className="bg-white rounded-xl shadow-md overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
@@ -163,12 +275,13 @@ export default function UserManagementPage() {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {users.map(u => (
+                        {filteredUsers.map(u => (
                             <tr key={u._id} className="hover:bg-gray-50">
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{u.name}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{u.email}</td>
@@ -178,8 +291,10 @@ export default function UserManagementPage() {
                                         {u.role}
                                     </span>
                                 </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm">{getStatusIndicator(u.verificationStatus)}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{format(new Date(u.createdAt), 'dd MMM yyyy')}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                                    <button onClick={() => handleViewUserClick(u)} className="p-2 text-indigo-600 rounded-md hover:bg-indigo-100" title="View Details"><Eye size={16} /></button>
                                     <button
                                         onClick={() => handleDeleteClick(u)}
                                         disabled={u._id === currentUser._id}
@@ -195,13 +310,14 @@ export default function UserManagementPage() {
                 </table>
             </div>
             <AddUserModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onUserAdded={handleUserAdded} />
+            <ViewUserModal user={userToProcess} isOpen={isViewModalOpen} onClose={() => setIsViewModalOpen(false)} onVerify={handleVerifyUser} />
             <ConfirmationModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={confirmDelete}
                 title="Confirm User Deletion"
             >
-                Are you sure you want to delete the user "<strong>{userToDelete?.name}</strong>"? This action cannot be undone.
+                Are you sure you want to delete the user "<strong>{userToProcess?.name}</strong>"? This action cannot be undone.
             </ConfirmationModal>
         </div>
     );

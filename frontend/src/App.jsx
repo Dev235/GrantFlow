@@ -18,8 +18,9 @@ import MyApplicationsPage from './pages/MyApplicationsPage';
 import NotFoundPage from './pages/NotFoundPage';
 import GrantDetailsPage from './pages/GrantDetailsPage';
 import ApplicationViewerPage from './pages/ApplicationViewerPage';
-import UserManagementPage from './pages/UserManagementPage'; // Import the new page
+import UserManagementPage from './pages/UserManagementPage';
 import AuditLogPage from './pages/AuditLogPage';
+import ProfilePage from './pages/ProfilePage'; // Import ProfilePage
 
 
 // Component Imports
@@ -62,6 +63,8 @@ const AppContent = () => {
                     {/* --- Protected Routes --- */}
                     <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
                     <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+                    <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+
                     
                     {/* Applicant Routes */}
                     <Route path="/applications" element={<ProtectedRoute roles={['Applicant']}><MyApplicationsPage /></ProtectedRoute>} />

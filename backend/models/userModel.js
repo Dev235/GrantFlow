@@ -4,6 +4,32 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
+const userProfileSchema = new mongoose.Schema({
+  address: { type: String, default: '' },
+  icNumber: { type: String, default: '' },
+  icPictureUrl: { type: String, default: '' },
+  emergencyContact: { type: String, default: '' },
+  age: { type: Number },
+  incomeGroup: { 
+    type: String, 
+    enum: ['', 'B40', 'M40', 'T20'],
+    default: ''
+  },
+  income: { type: Number },
+  race: { 
+    type: String, 
+    enum: ['', 'Malay', 'Chinese', 'Indian', 'Other'],
+    default: ''
+  },
+  gender: { 
+    type: String, 
+    enum: ['', 'Male', 'Female'],
+    default: ''
+  },
+  profilePictureUrl: { type: String, default: '' },
+});
+
+
 const userSchema = mongoose.Schema(
   {
     name: {
@@ -25,6 +51,16 @@ const userSchema = mongoose.Schema(
       enum: ['Applicant', 'Grant Maker', 'Super Admin'],
       default: 'Applicant',
     },
+    verificationStatus: {
+      type: String,
+      required: true,
+      enum: ['Unverified', 'Pending', 'Verified'],
+      default: 'Unverified',
+    },
+    profile: {
+      type: userProfileSchema,
+      default: () => ({})
+    }
   },
   {
     timestamps: true, // Adds createdAt and updatedAt timestamps
