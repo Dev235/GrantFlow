@@ -14,6 +14,8 @@ const chatbotRoutes = require('./routes/chatbotRoutes');
 const applicationRoutes = require('./routes/applicationRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const uploadRoutes = require('./routes/uploadRoutes'); // Import upload routes
+const auditRoutes = require('./routes/auditRoutes');
+
 
 // Load environment variables
 dotenv.config();
@@ -39,6 +41,8 @@ app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/upload', uploadRoutes); // Mount upload routes
+app.use('/api/audit', auditRoutes);
+
 
 // --- Serve Uploaded Files Statically ---
 // This makes the 'uploads' folder accessible via HTTP requests

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
-import { PlusCircle, Edit, Trash2, User } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, User, Eye } from 'lucide-react';
 import ConfirmationModal from '../components/common/ConfirmationModal';
 
 export default function ManageGrantsPage() {
@@ -104,10 +104,12 @@ export default function ManageGrantsPage() {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                     <button onClick={() => navigate(`/manage/applications/${grant._id}`)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border rounded-md hover:bg-gray-100">View Applications</button>
-                                     <button onClick={() => navigate(`/manage/grants/edit/${grant._id}`)} className="px-4 py-2 text-sm font-medium text-white bg-indigo-500 rounded-md hover:bg-indigo-600 inline-flex items-center gap-1">
-                                        <Edit size={16}/> Edit
-                                     </button>
+                                     <button onClick={() => navigate(`/manage/applications/${grant._id}`)} className="px-4 py-2 text-sm font-medium text-white bg-gray-600 rounded-md hover:bg-gray-700 inline-flex items-center gap-1"><Eye size={16}/> View Applications</button>
+                                     {!isSuperAdmin && (
+                                        <button onClick={() => navigate(`/manage/grants/edit/${grant._id}`)} className="px-4 py-2 text-sm font-medium text-white bg-indigo-500 rounded-md hover:bg-indigo-600 inline-flex items-center gap-1">
+                                            <Edit size={16}/> Edit
+                                        </button>
+                                     )}
                                      <button onClick={() => handleDeleteClick(grant)} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 inline-flex items-center gap-1">
                                         <Trash2 size={16}/> Remove
                                      </button>

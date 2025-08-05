@@ -1,6 +1,8 @@
 // backend/controllers/applicationController.js
 const Application = require('../models/applicationModel');
 const Grant = require('../models/grantModel');
+const { logAction } = require('../utils/auditLogger');
+
 
 // @desc    Create a new application for a grant
 // @route   POST /api/applications/:grantId
@@ -44,6 +46,7 @@ const submitApplication = async (req, res) => {
         });
 
         const createdApplication = await application.save();
+        await logAction(req.user, 'APPLICATION_SUBMITTED', { applicationId: createdApplication._id, grantId: grant._id });
         res.status(201).json(createdApplication);
     } catch (error) {
         res.status(400).json({ message: 'Invalid application data', error: error.message });
@@ -85,12 +88,14 @@ const updateApplicationStatus = async (req, res) => {
         const application = await Application.findById(req.params.id);
         if (!application) return res.status(404).json({ message: 'Application not found' });
         
-        if (application.grantMaker.toString() !== req.user._id.toString()) {
+        if (application.grantMaker.toString() !== req.user._id.toString() && req.user.role !== 'Super Admin') {
             return res.status(401).json({ message: 'Not authorized' });
         }
 
+        const oldStatus = application.status;
         application.status = req.body.status || application.status;
         const updatedApplication = await application.save();
+        await logAction(req.user, 'APPLICATION_STATUS_CHANGED', { applicationId: application._id, from: oldStatus, to: updatedApplication.status });
         res.json(updatedApplication);
     } catch (error) {
         res.status(400).json({ message: 'Invalid data', error: error.message });
@@ -107,13 +112,15 @@ const updateApplicationFlag = async (req, res) => {
             return res.status(404).json({ message: 'Application not found' });
         }
 
-        // Ensure the user updating the flag is the grant maker
-        if (application.grantMaker.toString() !== req.user._id.toString()) {
+        // Ensure the user updating the flag is the grant maker or super admin
+        if (application.grantMaker.toString() !== req.user._id.toString() && req.user.role !== 'Super Admin') {
             return res.status(401).json({ message: 'Not authorized' });
         }
 
+        const oldFlag = application.flag;
         application.flag = req.body.flag || null;
         const updatedApplication = await application.save();
+        await logAction(req.user, 'APPLICATION_FLAG_CHANGED', { applicationId: application._id, from: oldFlag, to: updatedApplication.flag });
         res.json(updatedApplication);
     } catch (error) {
         res.status(400).json({ message: 'Invalid data', error: error.message });

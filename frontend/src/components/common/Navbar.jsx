@@ -2,15 +2,28 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LogOut, LayoutDashboard, FileText, Edit, FolderKanban, UserCircle, Users } from 'lucide-react';
+import { LogOut, LayoutDashboard, FileText, Edit, FolderKanban, UserCircle, Users, History } from 'lucide-react';
 
 export default function Navbar() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
 
-    const handleLogout = () => {
-        logout();
-        navigate('/login');
+    const handleLogout = async () => {
+        try {
+            // Call the backend to log the logout action
+            await fetch('http://localhost:5000/api/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${user.token}`,
+                },
+            });
+        } catch (error) {
+            console.error('Failed to log logout action on server:', error);
+        } finally {
+            // Proceed with client-side logout regardless of API call success
+            logout();
+            navigate('/login');
+        }
     };
 
     const applicantLinks = [
@@ -29,6 +42,7 @@ export default function Navbar() {
         { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={18}/> },
         { name: 'User Management', path: '/admin/users', icon: <Users size={18}/> },
         { name: 'Manage All Grants', path: '/manage/grants', icon: <FolderKanban size={18}/> },
+        { name: 'Audit Log', path: '/admin/audit', icon: <History size={18}/> },
     ];
 
     const getNavLinks = () => {

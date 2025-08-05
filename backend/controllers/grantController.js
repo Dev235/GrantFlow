@@ -1,6 +1,8 @@
 // controllers/grantController.js
 const Grant = require('../models/grantModel');
 const Application = require('../models/applicationModel');
+const { logAction } = require('../utils/auditLogger');
+
 
 // @desc    Fetch all open grants
 // @route   GET /api/grants
@@ -65,6 +67,7 @@ const createGrant = async (req, res) => {
       grantMaker: req.user._id,
     });
     const createdGrant = await grant.save();
+    await logAction(req.user, 'GRANT_CREATED', { grantId: createdGrant._id, grantTitle: createdGrant.title });
     res.status(201).json(createdGrant);
   } catch (error) {
     res.status(400).json({ message: 'Invalid grant data.', error: error.message });
@@ -80,9 +83,9 @@ const updateGrant = async (req, res) => {
         const grant = await Grant.findById(req.params.id);
 
         if (grant) {
-            // Allow edit if user is the owner OR a Super Admin
-            if (grant.grantMaker.toString() !== req.user._id.toString() && req.user.role !== 'Super Admin') {
-                return res.status(401).json({ message: 'Not authorized to edit this grant' });
+            // Allow edit ONLY if user is the owner. Super Admin cannot edit.
+            if (grant.grantMaker.toString() !== req.user._id.toString()) {
+                return res.status(403).json({ message: 'Not authorized to edit this grant' });
             }
 
             grant.title = title || grant.title;
@@ -94,6 +97,7 @@ const updateGrant = async (req, res) => {
             grant.applicationQuestions = applicationQuestions || grant.applicationQuestions;
 
             const updatedGrant = await grant.save();
+            await logAction(req.user, 'GRANT_UPDATED', { grantId: updatedGrant._id, grantTitle: updatedGrant.title });
             res.json(updatedGrant);
 
         } else {
@@ -117,9 +121,11 @@ const deleteGrant = async (req, res) => {
                 return res.status(401).json({ message: 'Not authorized to delete this grant' });
             }
 
+            const grantDetails = { grantId: grant._id, grantTitle: grant.title };
             await Application.deleteMany({ grant: req.params.id });
             await Grant.deleteOne({ _id: req.params.id });
 
+            await logAction(req.user, 'GRANT_DELETED', grantDetails);
             res.json({ message: 'Grant and associated applications removed' });
         } else {
             res.status(404).json({ message: 'Grant not found' });

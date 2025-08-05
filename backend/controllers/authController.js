@@ -3,6 +3,8 @@
 
 const User = require('../models/userModel');
 const generateToken = require('../utils/generateToken');
+const { logAction } = require('../utils/auditLogger');
+
 
 /**
  * @desc    Register a new user
@@ -28,6 +30,7 @@ const registerUser = async (req, res) => {
     });
 
     if (user) {
+      await logAction(user, 'USER_REGISTER', { email: user.email, role: user.role });
       res.status(201).json({
         _id: user._id,
         name: user.name,
@@ -56,6 +59,7 @@ const loginUser = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (user && (await user.matchPassword(password))) {
+      await logAction(user, 'USER_LOGIN', { email: user.email });
       res.json({
         _id: user._id,
         name: user.name,
@@ -72,4 +76,18 @@ const loginUser = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, loginUser };
+/**
+ * @desc    Log user out
+ * @route   POST /api/auth/logout
+ * @access  Private
+ */
+const logoutUser = async (req, res) => {
+    try {
+        await logAction(req.user, 'USER_LOGOUT', { email: req.user.email });
+        res.status(200).json({ message: 'Logout successful' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error during logout' });
+    }
+};
+
+module.exports = { registerUser, loginUser, logoutUser };

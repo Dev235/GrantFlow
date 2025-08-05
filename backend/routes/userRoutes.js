@@ -1,38 +1,14 @@
 // backend/routes/userRoutes.js
 const express = require('express');
 const router = express.Router();
-const User = require('../models/userModel'); // Import User model
+const { getUserProfile, getAllUsers, createUser, deleteUser } = require('../controllers/userControllers'); // Import User model
 const { protect, authorize } = require('../middleware/authMiddleware');
 
-// @desc    Get user profile
-// @route   GET /api/users/profile
-// @access  Private
-const getUserProfile = async (req, res) => {
-    if (req.user) {
-        res.json({
-            _id: req.user._id,
-            name: req.user.name,
-            email: req.user.email,
-            role: req.user.role,
-        });
-    } else {
-        res.status(404).json({ message: 'User not found' });
-    }
-};
-
-// @desc    Get all users
-// @route   GET /api/users
-// @access  Private (Super Admin)
-const getAllUsers = async (req, res) => {
-    try {
-        const users = await User.find({}).select('-password');
-        res.json(users);
-    } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
-    }
-};
 
 router.get('/profile', protect, getUserProfile);
 router.get('/', protect, authorize('Super Admin'), getAllUsers);
+router.post('/', protect, authorize('Super Admin'), createUser);
+router.delete('/:id', protect, authorize('Super Admin'), deleteUser);
+
 
 module.exports = router;

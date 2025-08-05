@@ -18,7 +18,7 @@ const getUserProfile = async (req, res) => {
     }
 };
 
-// @desc    Get all users
+// @desc    Get all users for Super Admin
 // @route   GET /api/users
 // @access  Private (Super Admin)
 const getAllUsers = async (req, res) => {
@@ -30,8 +30,7 @@ const getAllUsers = async (req, res) => {
     }
 };
 
-
-// @desc    Create a new user by Super Admin
+// @desc    Create a new user
 // @route   POST /api/users
 // @access  Private (Super Admin)
 const createUser = async (req, res) => {
@@ -60,7 +59,7 @@ const createUser = async (req, res) => {
     }
 };
 
-// @desc    Delete a user by Super Admin
+// @desc    Delete a user
 // @route   DELETE /api/users/:id
 // @access  Private (Super Admin)
 const deleteUser = async (req, res) => {
@@ -70,6 +69,7 @@ const deleteUser = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
+        // Super Admin cannot delete themselves
         if (req.user._id.toString() === userToDelete._id.toString()) {
             return res.status(400).json({ message: 'You cannot delete your own account.' });
         }
@@ -83,6 +83,5 @@ const deleteUser = async (req, res) => {
         res.status(500).json({ message: 'Server Error', error: error.message });
     }
 };
-
 
 module.exports = { getUserProfile, getAllUsers, createUser, deleteUser };

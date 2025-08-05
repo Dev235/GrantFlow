@@ -19,6 +19,8 @@ import NotFoundPage from './pages/NotFoundPage';
 import GrantDetailsPage from './pages/GrantDetailsPage';
 import ApplicationViewerPage from './pages/ApplicationViewerPage';
 import UserManagementPage from './pages/UserManagementPage'; // Import the new page
+import AuditLogPage from './pages/AuditLogPage';
+
 
 // Component Imports
 import Navbar from './components/common/Navbar';
@@ -66,13 +68,15 @@ const AppContent = () => {
                     <Route path="/grants/:id/apply" element={<ProtectedRoute roles={['Applicant']}><ApplyGrantPage /></ProtectedRoute>} />
 
                     {/* Grant Maker Routes */}
-                    <Route path="/manage/create" element={<ProtectedRoute roles={['Grant Maker', 'Super Admin']}><CreateGrantPage /></ProtectedRoute>} />
+                    <Route path="/manage/create" element={<ProtectedRoute roles={['Grant Maker']}><CreateGrantPage /></ProtectedRoute>} />
                     <Route path="/manage/grants" element={<ProtectedRoute roles={['Grant Maker', 'Super Admin']}><ManageGrantsPage /></ProtectedRoute>} />
-                    <Route path="/manage/grants/edit/:id" element={<ProtectedRoute roles={['Grant Maker', 'Super Admin']}><EditGrantPage /></ProtectedRoute>} />
+                    <Route path="/manage/grants/edit/:id" element={<ProtectedRoute roles={['Grant Maker']}><EditGrantPage /></ProtectedRoute>} />
                     <Route path="/manage/applications/:grantId" element={<ProtectedRoute roles={['Grant Maker', 'Super Admin']}><ApplicationViewerPage /></ProtectedRoute>} />
 
                     {/* Super Admin Routes */}
                     <Route path="/admin/users" element={<ProtectedRoute roles={['Super Admin']}><UserManagementPage /></ProtectedRoute>} />
+                    <Route path="/admin/audit" element={<ProtectedRoute roles={['Super Admin']}><AuditLogPage /></ProtectedRoute>} />
+
 
                     {/* Fallback Route */}
                     <Route path="*" element={<NotFoundPage />} />
