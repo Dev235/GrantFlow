@@ -13,6 +13,7 @@ const auditLogSchema = new mongoose.Schema(
       required: true,
       enum: [
         'USER_LOGIN', 'USER_REGISTER', 'USER_CREATED', 'USER_DELETED', 'USER_LOGOUT',
+        'USER_PROFILE_UPDATE', 'USER_VERIFIED',
         'GRANT_CREATED', 'GRANT_UPDATED', 'GRANT_DELETED',
         'APPLICATION_SUBMITTED', 'APPLICATION_STATUS_CHANGED', 'APPLICATION_FLAG_CHANGED'
       ],

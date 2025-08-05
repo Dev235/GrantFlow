@@ -73,15 +73,19 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 };
 
 // Middleware to run before saving a user document
-// This will hash the password if it has been modified
 userSchema.pre('save', async function (next) {
-  // Only hash the password if it has been modified (or is new)
-  if (!this.isModified('password')) {
-    next();
+  // Hash the password if it has been modified
+  if (this.isModified('password')) {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
   }
 
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+  // --- NEW: Auto-verify Super Admins ---
+  if (this.role === 'Super Admin') {
+    this.verificationStatus = 'Verified';
+  }
+  
+  next();
 });
 
 const User = mongoose.model('User', userSchema);

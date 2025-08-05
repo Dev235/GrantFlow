@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Save, UploadCloud, CheckCircle, AlertCircle } from 'lucide-react';
+import ConfirmationModal from '../components/common/ConfirmationModal';
+
 
 export default function ProfilePage() {
     const { user, login } = useAuth();
@@ -25,6 +27,8 @@ export default function ProfilePage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+
 
     useEffect(() => {
         if (user) {
@@ -102,6 +106,36 @@ export default function ProfilePage() {
         }
     };
 
+    const proceedWithUpdate = async () => {
+        setIsConfirmModalOpen(false);
+        setLoading(true);
+        setError('');
+        setSuccess('');
+        try {
+            const submissionData = { ...formData };
+            if (!submissionData.password) {
+                delete submissionData.password;
+            }
+
+            const res = await fetch('http://localhost:5000/api/users/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${user.token}`,
+                },
+                body: JSON.stringify(submissionData),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+            login(data); 
+            setSuccess('Profile updated successfully! If you were already verified, your status is now pending re-verification.');
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -119,29 +153,11 @@ export default function ProfilePage() {
         }
         // --- END VALIDATION ---
 
-        setLoading(true);
-        try {
-            const submissionData = { ...formData };
-            if (!submissionData.password) {
-                delete submissionData.password;
-            }
-
-            const res = await fetch('http://localhost:5000/api/users/profile', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${user.token}`,
-                },
-                body: JSON.stringify(submissionData),
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message);
-            login(data);
-            setSuccess('Profile updated successfully!');
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
+        // --- CONFIRMATION LOGIC ---
+        if (user.verificationStatus === 'Verified') {
+            setIsConfirmModalOpen(true);
+        } else {
+            proceedWithUpdate();
         }
     };
 
@@ -150,7 +166,7 @@ export default function ProfilePage() {
         if (user.verificationStatus === 'Verified') {
             return (
                 <div className="p-3 bg-green-100 text-green-700 rounded-lg flex items-center gap-2">
-                    <CheckCircle size={18} /> Your profile is verified.
+                    <CheckCircle size={18} /> Your profile is verified. Note: Changing details will require re-verification.
                 </div>
             )
         }
@@ -246,6 +262,15 @@ export default function ProfilePage() {
                     <Save size={18} /> {loading ? 'Saving...' : 'Save Changes'}
                 </button>
             </form>
+
+            <ConfirmationModal
+                isOpen={isConfirmModalOpen}
+                onClose={() => setIsConfirmModalOpen(false)}
+                onConfirm={proceedWithUpdate}
+                title="Confirm Profile Update"
+            >
+                Are you sure you want to update your profile? Your account status will be set to "Pending" and will require re-verification by an administrator.
+            </ConfirmationModal>
         </div>
     );
 };

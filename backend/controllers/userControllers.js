@@ -1,11 +1,9 @@
 // backend/controllers/userController.js
 const User = require('../models/userModel');
 const { logAction } = require('../utils/auditLogger');
-const generateToken = require('../utils/generateToken'); // <-- FIX: Added this import
+const generateToken = require('../utils/generateToken');
 
-// @desc    Get user profile
-// @route   GET /api/users/profile
-// @access  Private
+// ... (getUserProfile, updateUserProfile, getAllUsers, createUser, deleteUser, verifyUser functions remain the same) ...
 const getUserProfile = async (req, res) => {
     try {
         const user = await User.findById(req.user._id).select('-password');
@@ -19,9 +17,6 @@ const getUserProfile = async (req, res) => {
     }
 };
 
-// @desc    Update user profile
-// @route   PUT /api/users/profile
-// @access  Private
 const updateUserProfile = async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
@@ -32,16 +27,17 @@ const updateUserProfile = async (req, res) => {
                 user.password = req.body.password;
             }
 
-            // Update profile sub-document
             const profileData = req.body.profile || {};
             Object.assign(user.profile, profileData);
 
-            // If profile is submitted and status is Unverified, set status to Pending
             if (user.verificationStatus === 'Unverified' && profileData.icNumber && profileData.icPictureUrl) {
                 user.verificationStatus = 'Pending';
             }
 
             const updatedUser = await user.save();
+            
+            await logAction(req.user, 'USER_PROFILE_UPDATE', { updatedUserId: updatedUser._id, updatedFields: Object.keys(req.body) });
+
             res.json({
                 _id: updatedUser._id,
                 name: updatedUser.name,
@@ -49,7 +45,7 @@ const updateUserProfile = async (req, res) => {
                 role: updatedUser.role,
                 verificationStatus: updatedUser.verificationStatus,
                 profile: updatedUser.profile,
-                token: generateToken(updatedUser._id), // This will now work
+                token: generateToken(updatedUser._id),
             });
 
         } else {
@@ -60,9 +56,6 @@ const updateUserProfile = async (req, res) => {
     }
 };
 
-// @desc    Get all users for Super Admin
-// @route   GET /api/users
-// @access  Private (Super Admin)
 const getAllUsers = async (req, res) => {
     try {
         const users = await User.find({}).select('-password');
@@ -72,10 +65,6 @@ const getAllUsers = async (req, res) => {
     }
 };
 
-
-// @desc    Create a new user by Super Admin
-// @route   POST /api/users
-// @access  Private (Super Admin)
 const createUser = async (req, res) => {
     const { name, email, password, role } = req.body;
     try {
@@ -104,9 +93,6 @@ const createUser = async (req, res) => {
     }
 };
 
-// @desc    Delete a user by Super Admin
-// @route   DELETE /api/users/:id
-// @access  Private (Super Admin)
 const deleteUser = async (req, res) => {
     try {
         const userToDelete = await User.findById(req.params.id);
@@ -128,9 +114,6 @@ const deleteUser = async (req, res) => {
     }
 };
 
-// @desc    Verify a user
-// @route   PUT /api/users/:id/verify
-// @access  Private (Super Admin)
 const verifyUser = async (req, res) => {
     try {
         const userToVerify = await User.findById(req.params.id);
@@ -138,7 +121,9 @@ const verifyUser = async (req, res) => {
         if (userToVerify) {
             userToVerify.verificationStatus = 'Verified';
             await userToVerify.save();
-            // Optionally: log this action
+            
+            await logAction(req.user, 'USER_VERIFIED', { verifiedUserId: userToVerify._id, verifiedUserEmail: userToVerify.email });
+
             res.json({ message: 'User has been verified.' });
         } else {
             res.status(404).json({ message: 'User not found' });
@@ -148,5 +133,36 @@ const verifyUser = async (req, res) => {
     }
 };
 
+// @desc    Reset a user's password
+// @route   PUT /api/users/:id/reset-password
+// @access  Private (Super Admin)
+const resetUserPassword = async (req, res) => {
+    try {
+        const { password } = req.body;
+        if (!password) {
+            return res.status(400).json({ message: 'Password is required.' });
+        }
 
-module.exports = { getUserProfile, updateUserProfile, getAllUsers, createUser, deleteUser, verifyUser };
+        const userToUpdate = await User.findById(req.params.id);
+
+        if (userToUpdate) {
+            userToUpdate.password = password;
+            await userToUpdate.save();
+            
+            await logAction(req.user, 'USER_PROFILE_UPDATE', { 
+                updatedUserId: userToUpdate._id, 
+                updatedUserEmail: userToUpdate.email,
+                action: 'Password Reset' 
+            });
+
+            res.json({ message: 'Password has been reset successfully.' });
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: 'Server error while resetting password.' });
+    }
+};
+
+
+module.exports = { getUserProfile, updateUserProfile, getAllUsers, createUser, deleteUser, verifyUser, resetUserPassword };

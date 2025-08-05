@@ -2,10 +2,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
-import { User, Briefcase, Shield, PlusCircle, Trash2, CheckCircle, AlertCircle, Eye, X } from 'lucide-react';
+import { User, Briefcase, Shield, PlusCircle, Trash2, CheckCircle, AlertCircle, Eye, X, Key } from 'lucide-react';
 import ConfirmationModal from '../components/common/ConfirmationModal';
 
-// AddUserModal Component
+// ... (AddUserModal component remains the same)
 const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -89,8 +89,43 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
     );
 };
 
+
 // ViewUserModal Component
 const ViewUserModal = ({ user, isOpen, onClose, onVerify }) => {
+    const { user: currentUser } = useAuth();
+    const [newPassword, setNewPassword] = useState('');
+    const [resetStatus, setResetStatus] = useState({ message: '', error: false });
+
+    useEffect(() => {
+        if (!isOpen) {
+            setNewPassword('');
+            setResetStatus({ message: '', error: false });
+        }
+    }, [isOpen]);
+
+    const handleResetPassword = async () => {
+        if (!newPassword) {
+            setResetStatus({ message: 'Please enter a new password.', error: true });
+            return;
+        }
+        try {
+            const response = await fetch(`http://localhost:5000/api/users/${user._id}/reset-password`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentUser.token}`,
+                },
+                body: JSON.stringify({ password: newPassword }),
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message);
+            setResetStatus({ message: 'Password reset successfully!', error: false });
+            setNewPassword('');
+        } catch (err) {
+            setResetStatus({ message: err.message, error: true });
+        }
+    };
+
     if (!isOpen || !user) return null;
 
     const DetailItem = ({ label, value }) => (
@@ -108,6 +143,7 @@ const ViewUserModal = ({ user, isOpen, onClose, onVerify }) => {
                     <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-200"><X size={20} /></button>
                 </div>
                 <div className="p-6 overflow-y-auto space-y-6">
+                    {/* ... User details section ... */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="md:col-span-1 flex flex-col items-center">
                             <img src={user.profile?.profilePictureUrl ? `http://localhost:5000${user.profile.profilePictureUrl}` : `https://ui-avatars.com/api/?name=${user.name}&background=random&color=fff`} alt="Profile" className="w-32 h-32 rounded-full object-cover" />
@@ -132,6 +168,28 @@ const ViewUserModal = ({ user, isOpen, onClose, onVerify }) => {
                         {user.profile?.icPictureUrl ? (
                              <img src={`http://localhost:5000${user.profile.icPictureUrl}`} alt="IC" className="rounded-lg border max-w-sm" />
                         ) : <p className="text-gray-500">Not provided.</p>}
+                    </div>
+
+                    {/* --- NEW PASSWORD RESET SECTION --- */}
+                    <div className="border-t pt-4">
+                         <h4 className="font-semibold text-gray-700 mb-2">Reset Password</h4>
+                         <div className="flex items-center gap-2">
+                            <input 
+                                type="password" 
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                className="flex-grow px-3 py-2 border rounded-lg"
+                                placeholder="Enter new password for user"
+                            />
+                            <button onClick={handleResetPassword} className="px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-md hover:bg-orange-600 inline-flex items-center gap-2">
+                                <Key size={16}/> Reset
+                            </button>
+                         </div>
+                         {resetStatus.message && (
+                            <p className={`mt-2 text-sm ${resetStatus.error ? 'text-red-600' : 'text-green-600'}`}>
+                                {resetStatus.message}
+                            </p>
+                         )}
                     </div>
                 </div>
                  <div className="p-4 border-t bg-gray-50 flex justify-end gap-3">

@@ -7,7 +7,8 @@ const {
     getAllUsers, 
     createUser, 
     deleteUser,
-    verifyUser
+    verifyUser,
+    resetUserPassword // <-- Import new function
 } = require('../controllers/userControllers');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
@@ -26,5 +27,10 @@ router.route('/:id')
 
 router.route('/:id/verify')
     .put(protect, authorize('Super Admin'), verifyUser);
+
+// --- NEW ROUTE ---
+router.route('/:id/reset-password')
+    .put(protect, authorize('Super Admin'), resetUserPassword);
+
 
 module.exports = router;
