@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
 import { User, Briefcase, Shield, PlusCircle, Trash2, CheckCircle, AlertCircle, Eye, X, Key } from 'lucide-react';
 import ConfirmationModal from '../components/common/ConfirmationModal';
+import { API_BASE_URL } from '../apiConfig';
 
 // ... (AddUserModal component remains the same)
 const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
@@ -20,7 +21,7 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
         setLoading(true);
         setError('');
         try {
-            const response = await fetch('http://localhost:5000/api/users', {
+            const response = await fetch(`${API_BASE_URL}/api/users`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -109,7 +110,7 @@ const ViewUserModal = ({ user, isOpen, onClose, onVerify }) => {
             return;
         }
         try {
-            const response = await fetch(`http://localhost:5000/api/users/${user._id}/reset-password`, {
+            const response = await fetch(`${API_BASE_URL}/api/users/${user._id}/reset-password`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -146,7 +147,7 @@ const ViewUserModal = ({ user, isOpen, onClose, onVerify }) => {
                     {/* ... User details section ... */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="md:col-span-1 flex flex-col items-center">
-                            <img src={user.profile?.profilePictureUrl ? `http://localhost:5000${user.profile.profilePictureUrl}` : `https://ui-avatars.com/api/?name=${user.name}&background=random&color=fff`} alt="Profile" className="w-32 h-32 rounded-full object-cover" />
+                            <img src={user.profile?.profilePictureUrl ? `${API_BASE_URL}${user.profile.profilePictureUrl}` : `https://ui-avatars.com/api/?name=${user.name}&background=random&color=fff`} alt="Profile" className="w-32 h-32 rounded-full object-cover" />
                         </div>
                         <div className="md:col-span-2 grid grid-cols-2 gap-4">
                            <DetailItem label="Full Name" value={user.name} />
@@ -166,7 +167,7 @@ const ViewUserModal = ({ user, isOpen, onClose, onVerify }) => {
                     <div>
                         <h4 className="font-semibold text-gray-700 mb-2">IC Picture</h4>
                         {user.profile?.icPictureUrl ? (
-                             <img src={`http://localhost:5000${user.profile.icPictureUrl}`} alt="IC" className="rounded-lg border max-w-sm" />
+                             <img src={`${API_BASE_URL}${user.profile.icPictureUrl}`} alt="IC" className="rounded-lg border max-w-sm" />
                         ) : <p className="text-gray-500">Not provided.</p>}
                     </div>
 
@@ -221,7 +222,7 @@ export default function UserManagementPage() {
         const fetchUsers = async () => {
             if (!currentUser?.token) return;
             try {
-                const response = await fetch('http://localhost:5000/api/users', {
+                const response = await fetch(`${API_BASE_URL}/api/users`, {
                     headers: { 'Authorization': `Bearer ${currentUser.token}` },
                 });
                 if (!response.ok) throw new Error('Failed to fetch users.');
@@ -253,7 +254,7 @@ export default function UserManagementPage() {
     const confirmDelete = async () => {
         if (!userToProcess) return;
         try {
-            const response = await fetch(`http://localhost:5000/api/users/${userToProcess._id}`, {
+            const response = await fetch(`${API_BASE_URL}/api/users/${userToProcess._id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${currentUser.token}` },
             });
@@ -272,7 +273,7 @@ export default function UserManagementPage() {
 
     const handleVerifyUser = async (userToVerify) => {
         try {
-            await fetch(`http://localhost:5000/api/users/${userToVerify._id}/verify`, {
+            await fetch(`${API_BASE_URL}/api/users/${userToVerify._id}/verify`, {
                 method: 'PUT',
                 headers: { 'Authorization': `Bearer ${currentUser.token}` },
             });

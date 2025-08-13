@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Save, UploadCloud, CheckCircle, AlertCircle } from 'lucide-react';
 import ConfirmationModal from '../components/common/ConfirmationModal';
+import { API_BASE_URL } from '../apiConfig';
 
 
 export default function ProfilePage() {
@@ -89,7 +90,7 @@ export default function ProfilePage() {
         uploadFormData.append('file', file);
 
         try {
-            const res = await fetch('http://localhost:5000/api/upload', {
+            const res = await fetch(`${API_BASE_URL}/api/upload`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${user.token}` },
                 body: uploadFormData,
@@ -117,7 +118,7 @@ export default function ProfilePage() {
                 delete submissionData.password;
             }
 
-            const res = await fetch('http://localhost:5000/api/users/profile', {
+            const res = await fetch(`${API_BASE_URL}/api/users/profile`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -248,12 +249,12 @@ export default function ProfilePage() {
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Profile Picture</label>
                             <input type="file" name="profilePictureUrl" onChange={handleFileChange} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
-                            {formData.profile.profilePictureUrl && <img src={`http://localhost:5000${formData.profile.profilePictureUrl}`} alt="Profile Preview" className="mt-2 h-24 w-24 rounded-full object-cover"/>}
+                            {formData.profile.profilePictureUrl && <img src={`${API_BASE_URL}${formData.profile.profilePictureUrl}`} alt="Profile Preview" className="mt-2 h-24 w-24 rounded-full object-cover"/>}
                         </div>
                          <div>
                             <label className="block text-sm font-medium text-gray-700">IC Picture</label>
                             <input type="file" name="icPictureUrl" onChange={handleFileChange} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
-                             {formData.profile.icPictureUrl && <img src={`http://localhost:5000${formData.profile.icPictureUrl}`} alt="IC Preview" className="mt-2 h-32 rounded-lg object-contain"/>}
+                             {formData.profile.icPictureUrl && <img src={`${API_BASE_URL}${formData.profile.icPictureUrl}`} alt="IC Preview" className="mt-2 h-32 rounded-lg object-contain"/>}
                         </div>
                      </div>
                 </div>

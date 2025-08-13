@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
 import { History, Search, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { API_BASE_URL } from '../apiConfig';
 
 export default function AuditLogPage() {
     const [logs, setLogs] = useState([]);
@@ -40,7 +41,7 @@ export default function AuditLogPage() {
             if (filters.endDate) params.append('endDate', filters.endDate);
             if (filters.action) params.append('action', filters.action);
             
-            const response = await fetch(`http://localhost:5000/api/audit?${params.toString()}`, {
+            const response = await fetch(`${API_BASE_URL}/api/audit?${params.toString()}`, {
                 headers: { 'Authorization': `Bearer ${user.token}` },
             });
             if (!response.ok) throw new Error('Failed to fetch audit logs.');

@@ -2,6 +2,12 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const Grant = require('../models/grantModel');
 
+// --- TROUBLESHOOTING STEP ---
+// This will print the API key to your backend console when the chatbot is used.
+// If it prints 'undefined', it means your .env file is not being loaded correctly.
+console.log('GEMINI_API_KEY loaded:', process.env.GEMINI_API_KEY ? 'Yes' : 'No - CHECK YOUR .ENV SETUP!');
+// --- END TROUBLESHOOTING STEP ---
+
 // Initialize the Google Generative AI client
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
@@ -37,8 +43,6 @@ A user is looking for a grant. Their message is: "${prompt}"
 
 Based on their message and the list of grants, analyze their request and recommend one or more suitable grants. Explain why the grant(s) you recommend are a good match. If no grants seem to match, politely inform them.`;
 
-    // **FIX**: Map the chat history to the format expected by the Google AI SDK.
-    // The SDK expects a 'role' ('user' or 'model') and a 'parts' array.
     const formattedHistory = (history || []).map(msg => ({
         role: msg.from === 'bot' ? 'model' : 'user',
         parts: [{ text: msg.text }],
@@ -46,7 +50,6 @@ Based on their message and the list of grants, analyze their request and recomme
 
     const model = genAI.getGenerativeModel({ model: "gemini-pro" });
     
-    // Start the chat with the correctly formatted history
     const chat = model.startChat({
         history: formattedHistory,
         generationConfig: {
@@ -62,6 +65,10 @@ Based on their message and the list of grants, analyze their request and recomme
 
   } catch (error) {
     console.error('AI Chatbot Error:', error);
+    // Provide a more specific error message to the frontend
+    if (error.message.includes('API key not valid')) {
+        return res.status(401).json({ message: 'The AI service API key is not valid. Please check the server configuration.' });
+    }
     res.status(500).json({ message: 'An error occurred while communicating with the AI assistant.' });
   }
 };

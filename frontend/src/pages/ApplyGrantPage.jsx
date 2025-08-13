@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { UploadCloud, CheckCircle, AlertCircle } from 'lucide-react';
+import { API_BASE_URL } from '../apiConfig';
 
 export default function ApplyGrantPage() {
     const { id: grantId } = useParams();
@@ -18,7 +19,7 @@ export default function ApplyGrantPage() {
     useEffect(() => {
         const fetchGrant = async () => {
             try {
-                const response = await fetch(`http://localhost:5000/api/grants/${grantId}`);
+                const response = await fetch(`${API_BASE_URL}/api/grants/${grantId}`);
                 if (!response.ok) throw new Error('Could not fetch grant details.');
                 const data = await response.json();
                 setGrant(data);
@@ -63,7 +64,7 @@ export default function ApplyGrantPage() {
         setFileUploadStatus(prev => ({ ...prev, [questionId]: { status: 'uploading' } }));
 
         try {
-            const response = await fetch('http://localhost:5000/api/upload', {
+            const response = await fetch(`${API_BASE_URL}/api/upload`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${user.token}`,
@@ -102,7 +103,7 @@ export default function ApplyGrantPage() {
         }));
 
         try {
-            const response = await fetch(`http://localhost:5000/api/applications/${grantId}`, {
+            const response = await fetch(`${API_BASE_URL}/api/applications/${grantId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
