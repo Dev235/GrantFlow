@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { Calendar, Tag, DollarSign, Search } from 'lucide-react';
+import { API_BASE_URL } from '../apiConfig';
 
 export default function GrantsPage() {
     const [grants, setGrants] = useState([]);
@@ -14,7 +15,7 @@ export default function GrantsPage() {
     useEffect(() => {
         const fetchGrants = async () => {
             try {
-                const response = await fetch('http://localhost:5000/api/grants');
+                const response = await fetch(`${API_BASE_URL}/api/grants`);
                 if (!response.ok) throw new Error('Could not fetch grants from the server.');
                 const data = await response.json();
                 setGrants(data);

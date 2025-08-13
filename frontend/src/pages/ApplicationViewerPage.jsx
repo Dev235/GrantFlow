@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
 import { Award, X, Download, Flag, CheckCircle, Inbox, Clock, ThumbsUp, ThumbsDown, UserCircle, Calendar, Mail, ArrowRightCircle } from 'lucide-react';
 import ConfirmationModal from '../components/common/ConfirmationModal';
+import { API_BASE_URL } from '../apiConfig';
 
 // A dedicated component for rendering each application as a card
 const ApplicationCard = ({ app, totalPossiblePoints, onStatusChange, onFlagSet, onSelectApp, flagColorClass, currentFlag }) => {
@@ -81,8 +82,6 @@ export default function ApplicationViewerPage() {
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [appToProcess, setAppToProcess] = useState(null);
     
-    const API_BASE_URL = 'http://localhost:5000';
-
     const totalPossiblePoints = useMemo(() => {
         if (!grant) return 0;
         return grant.applicationQuestions.reduce((total, q) => total + (q.points || 0), 0);

@@ -3,6 +3,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { LogOut, LayoutDashboard, FileText, Edit, FolderKanban, UserCircle, Users, History, AlertCircle, CheckCircle } from 'lucide-react';
+import { API_BASE_URL } from '../../apiConfig';
 
 const VerificationStatus = ({ status }) => {
     if (status === 'Verified') {
@@ -21,7 +22,7 @@ export default function Navbar() {
     const handleLogout = async () => {
         try {
             // Call the backend to log the logout action
-            await fetch('http://localhost:5000/api/auth/logout', {
+            await fetch(`${API_BASE_URL}/api/auth/logout`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${user.token}`,
@@ -89,7 +90,7 @@ export default function Navbar() {
                             <>
                                 <Link to="/profile" className="flex items-center gap-2 cursor-pointer p-2 rounded-md hover:bg-gray-100">
                                    <img 
-                                        src={user.profile?.profilePictureUrl ? `http://localhost:5000${user.profile.profilePictureUrl}` : `https://ui-avatars.com/api/?name=${user.name}&background=random&color=fff`} 
+                                        src={user.profile?.profilePictureUrl ? `${API_BASE_URL}${user.profile.profilePictureUrl}` : `https://ui-avatars.com/api/?name=${user.name}&background=random&color=fff`} 
                                         alt="Profile" 
                                         className="w-8 h-8 rounded-full object-cover"
                                     />
