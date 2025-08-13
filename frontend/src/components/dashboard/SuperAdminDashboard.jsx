@@ -4,7 +4,6 @@ import StatCard from './StatCard';
 import { Users, User, Briefcase, FileText, DollarSign, UserCheck, UserX } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
-import { API_BASE_URL } from '../../apiConfig';
 
 export default function SuperAdminDashboard() {
     const [stats, setStats] = useState(null);
@@ -16,7 +15,7 @@ export default function SuperAdminDashboard() {
         const fetchStats = async () => {
             if (!user?.token) return;
             try {
-                const response = await fetch(`${API_BASE_URL}/api/dashboard/superadmin`, {
+                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/dashboard/superadmin`, {
                     headers: { 'Authorization': `Bearer ${user.token}` },
                 });
                 if (!response.ok) throw new Error('Failed to fetch dashboard data.');

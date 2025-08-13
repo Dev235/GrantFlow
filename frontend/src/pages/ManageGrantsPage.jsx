@@ -5,7 +5,6 @@ import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
 import { PlusCircle, Edit, Trash2, User, Eye } from 'lucide-react';
 import ConfirmationModal from '../components/common/ConfirmationModal';
-import { API_BASE_URL } from '../apiConfig';
 
 export default function ManageGrantsPage() {
     const [grants, setGrants] = useState([]);
@@ -25,7 +24,7 @@ export default function ManageGrantsPage() {
             const endpoint = isSuperAdmin ? 'all' : 'mygrants';
             
             try {
-                const response = await fetch(`${API_BASE_URL}/api/grants/${endpoint}`, {
+                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/grants/${endpoint}`, {
                     headers: {
                         'Authorization': `Bearer ${user.token}`,
                     },
@@ -53,7 +52,7 @@ export default function ManageGrantsPage() {
     const confirmDelete = async () => {
         if (!grantToDelete) return;
         try {
-            const response = await fetch(`${API_BASE_URL}/api/grants/${grantToDelete._id}`, {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/grants/${grantToDelete._id}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${user.token}`,

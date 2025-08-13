@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
-import { API_BASE_URL } from '../apiConfig';
 
 export default function MyApplicationsPage() {
     const [applications, setApplications] = useState([]);
@@ -14,7 +13,7 @@ export default function MyApplicationsPage() {
         const fetchMyApplications = async () => {
             if (!user?.token) return;
             try {
-                const response = await fetch(`${API_BASE_URL}/api/applications/my`, {
+                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/applications/my`, {
                     headers: { 'Authorization': `Bearer ${user.token}` },
                 });
                 if (!response.ok) throw new Error('Failed to fetch applications.');

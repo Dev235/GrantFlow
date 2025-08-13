@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { PlusCircle, Trash2, Award, AlertCircle } from 'lucide-react';
-import { API_BASE_URL } from '../apiConfig';
 
 export default function CreateGrantPage() {
     const { user } = useAuth();
@@ -76,7 +75,7 @@ export default function CreateGrantPage() {
             const token = user?.token;
             if (!token) throw new Error("Authentication error. Please log in again.");
 
-            const response = await fetch(`${API_BASE_URL}/api/grants`, {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/grants`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

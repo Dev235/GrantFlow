@@ -5,7 +5,6 @@ import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
 import { Award, X, Download, Flag, CheckCircle, Inbox, Clock, ThumbsUp, ThumbsDown, UserCircle, Calendar, Mail, ArrowRightCircle } from 'lucide-react';
 import ConfirmationModal from '../components/common/ConfirmationModal';
-import { API_BASE_URL } from '../apiConfig';
 
 // A dedicated component for rendering each application as a card
 const ApplicationCard = ({ app, totalPossiblePoints, onStatusChange, onFlagSet, onSelectApp, flagColorClass, currentFlag }) => {
@@ -91,12 +90,12 @@ export default function ApplicationViewerPage() {
         const fetchApplications = async () => {
             if (!user?.token) return;
             try {
-                const grantRes = await fetch(`${API_BASE_URL}/api/grants/${grantId}`);
+                const grantRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/grants/${grantId}`);
                 if (!grantRes.ok) throw new Error('Could not fetch grant details.');
                 const grantData = await grantRes.json();
                 setGrant(grantData);
 
-                const appRes = await fetch(`${API_BASE_URL}/api/applications/grant/${grantId}`, {
+                const appRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/applications/grant/${grantId}`, {
                     headers: { 'Authorization': `Bearer ${user.token}` },
                 });
                 if (!appRes.ok) throw new Error('Could not fetch applications.');
@@ -123,7 +122,7 @@ export default function ApplicationViewerPage() {
     const confirmStatusChange = async (appId, newStatus) => {
         if (!appId || !newStatus) return;
         try {
-            const response = await fetch(`${API_BASE_URL}/api/applications/${appId}/status`, {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/applications/${appId}/status`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -149,7 +148,7 @@ export default function ApplicationViewerPage() {
 
     const handleFlagSet = async (appId, color) => {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/applications/${appId}/flag`, {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/applications/${appId}/flag`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -179,7 +178,7 @@ export default function ApplicationViewerPage() {
     
     const renderAnswer = (answer) => {
         if (answer.questionType === 'file' && answer.answer) {
-            const filePath = `${API_BASE_URL}${answer.answer}`;
+            const filePath = `${import.meta.env.VITE_API_BASE_URL}${answer.answer}`;
             const isImage = /\.(jpeg|jpg|png|gif)$/i.test(answer.answer);
 
             if (isImage) {

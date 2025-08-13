@@ -3,7 +3,6 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
 import { Calendar, Tag, DollarSign, ArrowLeft } from 'lucide-react';
-import { API_BASE_URL } from '../apiConfig';
 
 export default function GrantDetailsPage() {
     const { id } = useParams();
@@ -17,7 +16,7 @@ export default function GrantDetailsPage() {
     useEffect(() => {
         const fetchGrant = async () => {
             try {
-                const response = await fetch(`${API_BASE_URL}/api/grants/${id}`);
+                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/grants/${id}`);
                 if (!response.ok) throw new Error('Grant not found.');
                 const data = await response.json();
                 setGrant(data);

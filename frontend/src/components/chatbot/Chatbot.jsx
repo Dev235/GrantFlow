@@ -1,7 +1,6 @@
 // src/components/chatbot/Chatbot.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, Send, X, Bot } from 'lucide-react';
-import { API_BASE_URL } from '../../apiConfig';
 
 export default function Chatbot() {
     const [isOpen, setIsOpen] = useState(false);
@@ -27,7 +26,7 @@ export default function Chatbot() {
         setLoading(true);
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/chatbot/recommend`, {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/chatbot/recommend`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ prompt: input, history: messages }),

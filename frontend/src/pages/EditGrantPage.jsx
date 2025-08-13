@@ -4,7 +4,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { PlusCircle, Trash2, Award } from 'lucide-react';
 import { format } from 'date-fns';
-import { API_BASE_URL } from '../apiConfig';
 
 export default function EditGrantPage() {
     const { id: grantId } = useParams();
@@ -18,7 +17,7 @@ export default function EditGrantPage() {
     useEffect(() => {
         const fetchGrant = async () => {
             try {
-                const response = await fetch(`${API_BASE_URL}/api/grants/${grantId}`);
+                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/grants/${grantId}`);
                 if (!response.ok) throw new Error('Could not fetch grant details.');
                 const data = await response.json();
                 // Format the deadline for the date input field
@@ -64,7 +63,7 @@ export default function EditGrantPage() {
             const token = user?.token;
             if (!token) throw new Error("Authentication error. Please log in again.");
 
-            const response = await fetch(`${API_BASE_URL}/api/grants/${grantId}`, {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/grants/${grantId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

@@ -14,7 +14,7 @@ export default function GrantMakerDashboard() {
         const fetchStats = async () => {
             if (!user?.token) return;
             try {
-                const response = await fetch('http://localhost:5000/api/dashboard/grantmaker', {
+                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/dashboard/grantmaker`, {
                     headers: { 'Authorization': `Bearer ${user.token}` },
                 });
                 if (!response.ok) throw new Error('Failed to fetch dashboard data.');
