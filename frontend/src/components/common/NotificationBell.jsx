@@ -73,7 +73,7 @@ export default function NotificationBell() {
             </button>
 
             {isOpen && (
-                <div className="absolute bottom-full mb-2 right-0 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-2xl border dark:border-gray-700 overflow-hidden z-20">
+                <div className="absolute bottom-full mb-2 left-0 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-2xl border dark:border-gray-700 overflow-hidden z-20">
                     <div className="p-3 font-semibold text-sm border-b dark:border-gray-700">Notifications</div>
                     <ul className="max-h-80 overflow-y-auto">
                         {notifications.length > 0 ? notifications.map(notif => (
