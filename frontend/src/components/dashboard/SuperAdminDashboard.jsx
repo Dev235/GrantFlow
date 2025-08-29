@@ -46,14 +46,14 @@ export default function SuperAdminDashboard() {
                 <StatCard icon={<FileText />} title="Total Applications" value={stats.totalApplications} color="indigo" />
                 <StatCard icon={<DollarSign />} title="Total Awarded" value={`RM ${stats.totalAwarded.toLocaleString()}`} color="green" />
             </div>
-             <div className="mt-8 bg-white p-6 rounded-xl shadow-md">
-                <h3 className="font-semibold text-lg mb-4 text-gray-700">Management</h3>
-                <p className="text-gray-600 mb-4">Oversee all users and grants on the platform.</p>
+             <div className="mt-8 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                <h3 className="font-semibold text-lg mb-4 text-gray-700 dark:text-gray-200">Management</h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-4">Oversee all users and grants on the platform.</p>
                 <div className="flex gap-4">
                     <Link to="/admin/users" className="px-6 py-3 text-white bg-indigo-600 rounded-lg font-semibold hover:bg-indigo-700">
                         Manage Users
                     </Link>
-                     <Link to="/manage/grants" className="px-6 py-3 text-gray-700 bg-gray-200 rounded-lg font-semibold hover:bg-gray-300">
+                     <Link to="/manage/grants" className="px-6 py-3 text-gray-700 bg-gray-200 rounded-lg font-semibold hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500">
                         Manage All Grants
                     </Link>
                 </div>

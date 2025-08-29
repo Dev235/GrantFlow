@@ -5,9 +5,6 @@ const JoinRequest = require('../models/joinRequestModel');
 const { logAction } = require('../utils/auditLogger');
 
 
-// @desc    Get all organizations
-// @route   GET /api/organizations
-// @access  Public
 const getOrganizations = async (req, res) => {
     try {
         const organizations = await Organization.find({}).select('name');
@@ -17,9 +14,6 @@ const getOrganizations = async (req, res) => {
     }
 };
 
-// @desc    Get members of a specific organization
-// @route   GET /api/organizations/:id/members
-// @access  Private (Admin of Org, Super Admin)
 const getOrganizationMembers = async (req, res) => {
     try {
         const organization = await Organization.findById(req.params.id).populate('members', '-password');
@@ -57,10 +51,6 @@ const requestToJoinOrganization = async (req, res) => {
     }
 };
 
-
-// @desc    Add a user to an organization
-// @route   POST /api/organizations/:id/members
-// @access  Private (Admin of Org)
 const addOrganizationMember = async (req, res) => {
     const { name, email, password, role } = req.body;
     const { id: organizationId } = req.params;
@@ -101,9 +91,6 @@ const addOrganizationMember = async (req, res) => {
     }
 };
 
-// @desc    Update a member's details within an organization
-// @route   PUT /api/organizations/:orgId/members/:memberId
-// @access  Private (Admin of Org, Super Admin)
 const updateOrganizationMember = async (req, res) => {
     const { orgId, memberId } = req.params;
     const { name, organizationRole } = req.body;
@@ -214,7 +201,7 @@ const removeOrganizationMember = async (req, res) => {
         const organization = await Organization.findById(orgId);
         if (!organization) return res.status(404).json({ message: 'Organization not found.' });
 
-        if (!organization.admins.some(adminId => adminId.equals(req.user._id))) {
+        if (!organization.admins.some(adminId => adminId.equals(req.user._id)) && req.user.role !== 'Super Admin') {
             return res.status(403).json({ message: 'Not authorized to remove members.' });
         }
 
@@ -231,7 +218,10 @@ const removeOrganizationMember = async (req, res) => {
             return res.status(400).json({ message: 'Cannot remove the last admin of an organization.' });
         }
 
-        await User.deleteOne({ _id: memberId });
+        member.organization = undefined;
+        member.organizationRole = undefined;
+        await member.save();
+
         organization.members.pull(memberId);
         organization.admins.pull(memberId);
         await organization.save();

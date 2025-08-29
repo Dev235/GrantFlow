@@ -27,7 +27,15 @@ export default function LoginPage() {
                 throw new Error(data.message || 'Failed to login');
             }
             login(data);
-            navigate('/dashboard');
+            
+            if (data.role === 'Reviewer') {
+                navigate('/review');
+            } else if (data.role === 'Approver') {
+                navigate('/approval');
+            } else {
+                navigate('/dashboard');
+            }
+
         } catch (err) {
             setError(err.message);
         } finally {
@@ -36,37 +44,37 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100">
-            <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg">
-                <h2 className="text-3xl font-bold text-center text-gray-800">Welcome Back!</h2>
-                <p className="text-center text-gray-500">Sign in to continue to GrantFlow</p>
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+            <div className="w-full max-w-md p-8 space-y-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
+                <h2 className="text-3xl font-bold text-center text-gray-800 dark:text-white">Welcome Back!</h2>
+                <p className="text-center text-gray-500 dark:text-gray-300">Sign in to continue to GrantFlow</p>
                 {error && <div className="p-3 bg-red-100 text-red-700 rounded-lg">{error}</div>}
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
-                        <label className="text-sm font-medium text-gray-700">Email Address</label>
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email Address</label>
                         <input 
                             type="email" 
                             value={email} 
                             onChange={(e) => setEmail(e.target.value)} 
                             required 
-                            className="w-full px-4 py-2 mt-2 border rounded-lg"
+                            className="w-full px-4 py-2 mt-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             placeholder="you@example.com"
                         />
                     </div>
                     <div>
-                        <label className="text-sm font-medium text-gray-700">Password</label>
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
                         <input 
                             type="password" 
                             value={password} 
                             onChange={(e) => setPassword(e.target.value)} 
                             required 
-                            className="w-full px-4 py-2 mt-2 border rounded-lg"
+                            className="w-full px-4 py-2 mt-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             placeholder="••••••••"
                         />
                     </div>
                     <div>
-                        <label className="text-sm font-medium text-gray-700">Login as</label>
-                        <select value={role} onChange={(e) => setRole(e.target.value)} className="w-full px-4 py-2 mt-2 bg-white border rounded-lg">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Login as</label>
+                        <select value={role} onChange={(e) => setRole(e.target.value)} className="w-full px-4 py-2 mt-2 bg-white border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                             <option value="Applicant">Applicant</option>
                             <option value="Grant Maker">Grant Maker</option>
                             <option value="Reviewer">Reviewer</option>
@@ -78,9 +86,9 @@ export default function LoginPage() {
                         {loading ? 'Signing In...' : 'Sign In'}
                     </button>
                 </form>
-                 <p className="text-sm text-center text-gray-600">
+                 <p className="text-sm text-center text-gray-600 dark:text-gray-400">
                     Don't have an account?{' '}
-                    <Link to="/register" className="font-medium text-indigo-600 hover:underline">
+                    <Link to="/register" className="font-medium text-indigo-600 hover:underline dark:text-indigo-400">
                         Register here
                     </Link>
                 </p>
@@ -88,3 +96,4 @@ export default function LoginPage() {
         </div>
     );
 };
+

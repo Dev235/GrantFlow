@@ -65,8 +65,8 @@ export default function GrantMakerDashboard() {
                     color="pink" 
                 />
             </div>
-            <div className="bg-white p-6 rounded-xl shadow-md">
-                <h3 className="font-semibold text-lg mb-4 text-gray-700">Applications by Category</h3>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                <h3 className="font-semibold text-lg mb-4 text-gray-700 dark:text-gray-200">Applications by Category</h3>
                 <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={stats.applicationsByCategory}>
                         <CartesianGrid strokeDasharray="3 3" />
