@@ -89,7 +89,7 @@ const AppContent = () => {
                         <Route path="/manage/grants" element={<ProtectedRoute roles={['Grant Maker', 'Super Admin']}><ManageGrantsPage /></ProtectedRoute>} />
                         <Route path="/manage/grants/edit/:id" element={<ProtectedRoute roles={['Grant Maker']}><EditGrantPage /></ProtectedRoute>} />
                         <Route path="/manage/applications/:grantId" element={<ProtectedRoute roles={['Grant Maker', 'Super Admin', 'Reviewer', 'Approver']}><ApplicationViewerPage /></ProtectedRoute>} />
-                        <Route path="/organization" element={<ProtectedRoute roles={['Grant Maker', 'Super Admin']}><OrganizationManagementPage /></ProtectedRoute>} />
+                        <Route path="/organization" element={<ProtectedRoute roles={['Grant Maker', 'Super Admin', 'Reviewer', 'Approver']}><OrganizationManagementPage /></ProtectedRoute>} />
                         <Route path="/organization/join" element={<ProtectedRoute roles={['Grant Maker']}><JoinOrganizationPage /></ProtectedRoute>} />
                         <Route path="/organization/requests" element={<ProtectedRoute roles={['Grant Maker']}><ManageJoinRequestsPage /></ProtectedRoute>} />
 
@@ -113,3 +113,4 @@ const AppContent = () => {
 };
 
 export default App;
+

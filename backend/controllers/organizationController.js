@@ -16,12 +16,32 @@ const getOrganizations = async (req, res) => {
 
 const getOrganizationMembers = async (req, res) => {
     try {
-        const organization = await Organization.findById(req.params.id).populate('members', '-password');
-        if (!organization) {
-            return res.status(404).json({ message: 'Organization not found' });
+        let orgIdToQuery;
+
+        // Super Admin can query any org by ID passed in the URL params
+        if (req.user.role === 'Super Admin') {
+            orgIdToQuery = req.params.id;
+            if (!orgIdToQuery) {
+                return res.status(400).json({ message: 'Organization ID is required for Super Admin.' });
+            }
+        } else {
+            // Other roles (Reviewer, Approver, Grant Maker) can only see their own organization
+            orgIdToQuery = req.user.organization;
+            if (!orgIdToQuery) {
+                 return res.status(400).json({ message: 'User is not associated with an organization.' });
+            }
         }
+
+        const organization = await Organization.findById(orgIdToQuery).populate('members', '-password');
+
+        if (!organization) {
+            return res.status(404).json({ message: 'Organization not found.' });
+        }
+
         res.json(organization.members);
+
     } catch (error) {
+        console.error(error); // Log the actual error for debugging
         res.status(500).json({ message: 'Server Error' });
     }
 };
@@ -245,3 +265,5 @@ module.exports = {
     handleJoinRequest,
     addOrganizationMember
 };
+
+

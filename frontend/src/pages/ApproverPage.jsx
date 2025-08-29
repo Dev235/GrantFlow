@@ -1,8 +1,9 @@
 // frontend/src/pages/ApproverPage.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, Inbox, CheckCircle } from 'lucide-react';
+import { ChevronRight, Inbox, CheckCircle, FileWarning } from 'lucide-react';
+import StatCard from '../components/dashboard/StatCard';
 
 export default function ApproverPage() {
     const { user } = useAuth();
@@ -30,6 +31,11 @@ export default function ApproverPage() {
         fetchGrantsForApproval();
     }, [user]);
 
+    const totalPending = useMemo(() => {
+        return grants.reduce((sum, grant) => sum + grant.pendingApprovalCount, 0);
+    }, [grants]);
+
+
     if (loading) return <div className="dark:text-white">Loading approval dashboard...</div>;
     if (error) return <div className="text-red-500">{error}</div>;
 
@@ -37,6 +43,15 @@ export default function ApproverPage() {
         <div className="space-y-6">
             <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Approval Dashboard</h1>
             <p className="text-gray-600 dark:text-gray-300">Grants with applications awaiting your approval are listed below.</p>
+
+            <div className="max-w-xs">
+                 <StatCard 
+                    icon={<FileWarning />} 
+                    title="Total Pending Approval" 
+                    value={totalPending} 
+                    color="yellow" 
+                />
+            </div>
             
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -77,3 +92,4 @@ export default function ApproverPage() {
         </div>
     );
 }
+

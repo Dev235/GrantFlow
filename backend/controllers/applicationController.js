@@ -59,11 +59,31 @@ const scoreApplication = async (req, res) => {
             return res.status(404).json({ message: 'Application not found' });
         }
 
+        // FIX: Fetch the grant to validate scores against max points.
+        const grant = await Grant.findById(application.grant);
+        if (!grant) {
+            return res.status(404).json({ message: 'Associated grant not found' });
+        }
+
+        const questionPointsMap = new Map(
+            grant.applicationQuestions.map(q => [q._id.toString(), q.points])
+        );
+
         let totalScore = 0;
         application.answers.forEach(appAnswer => {
             const submittedAnswer = answers.find(a => a._id.toString() === appAnswer._id.toString());
             if (submittedAnswer) {
-                const score = Number(submittedAnswer.reviewerScore) || 0;
+                const maxPoints = questionPointsMap.get(appAnswer.questionId.toString()) || 0;
+                let score = Number(submittedAnswer.reviewerScore) || 0;
+
+                // FIX: Check if the score exceeds the max points for the question.
+                if (score > maxPoints) {
+                    score = maxPoints; // Cap the score at the maximum allowed.
+                }
+                if (score < 0) {
+                    score = 0; // Score cannot be negative.
+                }
+
                 appAnswer.reviewerScore = score;
                 appAnswer.reviewerComments = submittedAnswer.reviewerComments || '';
                 totalScore += score;
@@ -114,7 +134,7 @@ const getMyApplications = async (req, res) => {
 
 // @desc    Update an application's status
 // @route   PUT /api/applications/:id/status
-// @access  Private (Grant Maker, Super Admin, Approver)
+// @access  Private (Super Admin, Approver)
 const updateApplicationStatus = async (req, res) => {
     try {
         const application = await Application.findById(req.params.id);

@@ -14,20 +14,28 @@ const {
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 
-// @route   /api/organizations
+// @route   GET /api/organizations
 router.get('/', getOrganizations);
+
+// @route   POST /api/organizations/join
 router.post('/join', protect, authorize('Grant Maker'), requestToJoinOrganization);
 
-router.get('/:id/join-requests', protect, authorize('Grant Maker'), getJoinRequests);
-router.put('/join-requests/:requestId', protect, authorize('Grant Maker'), handleJoinRequest);
+// @route   GET /api/organizations/:id/join-requests
+router.get('/:id/join-requests', protect, authorize('Grant Maker', 'Super Admin'), getJoinRequests);
 
-router.route('/:id/members')
-    .get(protect, authorize('Grant Maker', 'Super Admin'), getOrganizationMembers)
-    .post(protect, authorize('Grant Maker'), addOrganizationMember);
+// @route   PUT /api/organizations/join-requests/:requestId
+router.put('/join-requests/:requestId', protect, authorize('Grant Maker', 'Super Admin'), handleJoinRequest);
 
-router.route('/:orgId/members/:memberId')
-    .put(protect, authorize('Grant Maker', 'Super Admin'), updateOrganizationMember)
-    .delete(protect, authorize('Grant Maker'), removeOrganizationMember);
+// @route   /api/organizations/:id/members
+// Everyone in org can view members
+router.get('/:id/members', protect, authorize('Reviewer', 'Approver', 'Grant Maker', 'Super Admin'), getOrganizationMembers);
 
+// Only Grant Maker + Super Admin can add members
+router.post('/:id/members', protect, authorize('Grant Maker', 'Super Admin'), addOrganizationMember);
+
+// @route   /api/organizations/:orgId/members/:memberId
+// Only Grant Maker + Super Admin can update/remove members
+router.put('/:orgId/members/:memberId', protect, authorize('Grant Maker', 'Super Admin'), updateOrganizationMember);
+router.delete('/:orgId/members/:memberId', protect, authorize('Grant Maker', 'Super Admin'), removeOrganizationMember);
 
 module.exports = router;

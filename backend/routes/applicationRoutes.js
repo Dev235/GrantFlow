@@ -22,8 +22,9 @@ router.get('/grant/:grantId', protect, authorize('Grant Maker', 'Super Admin', '
 // Applicant: Submit an application
 router.post('/:grantId', protect, authorize('Applicant'), submitApplication);
 
-// Grant Maker: Update the status of an application
-router.put('/:id/status', protect, authorize('Grant Maker', 'Super Admin', 'Approver'), updateApplicationStatus);
+// Grant Maker & Super Admin: Update the status of an application
+// FIX: Removed 'Grant Maker' from authorized roles for changing status. Only Super Admin and Approver can now change it.
+router.put('/:id/status', protect, authorize('Super Admin', 'Approver'), updateApplicationStatus);
 
 // Grant Maker: Update the flag of an application
 router.put('/:id/flag', protect, authorize('Grant Maker', 'Super Admin', 'Reviewer'), updateApplicationFlag);

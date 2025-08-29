@@ -1,8 +1,9 @@
 // frontend/src/pages/ReviewerPage.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, Inbox, CheckCircle } from 'lucide-react';
+import { ChevronRight, Inbox, CheckCircle, FileWarning } from 'lucide-react';
+import StatCard from '../components/dashboard/StatCard';
 
 export default function ReviewerPage() {
     const { user } = useAuth();
@@ -30,6 +31,10 @@ export default function ReviewerPage() {
         fetchGrantsForReview();
     }, [user]);
 
+    const totalPending = useMemo(() => {
+        return grants.reduce((sum, grant) => sum + grant.pendingReviewCount, 0);
+    }, [grants]);
+
     if (loading) return <div className="dark:text-white">Loading review dashboard...</div>;
     if (error) return <div className="text-red-500">{error}</div>;
 
@@ -38,6 +43,15 @@ export default function ReviewerPage() {
             <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Review Dashboard</h1>
             <p className="text-gray-600 dark:text-gray-300">Grants assigned to you for review are listed below.</p>
             
+            <div className="max-w-xs">
+                 <StatCard 
+                    icon={<FileWarning />} 
+                    title="Total Pending Review" 
+                    value={totalPending} 
+                    color="yellow" 
+                />
+            </div>
+
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead className="bg-gray-50 dark:bg-gray-700">
@@ -77,3 +91,4 @@ export default function ReviewerPage() {
         </div>
     );
 }
+

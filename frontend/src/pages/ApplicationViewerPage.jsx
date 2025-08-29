@@ -23,7 +23,10 @@ export default function ApplicationViewerPage() {
 
     const isReviewer = user?.role === 'Reviewer';
     const isApprover = user?.role === 'Approver';
-    const isGrantMaker = user?.role === 'Grant Maker' || user?.role === 'Super Admin';
+    const isGrantMaker = user?.role === 'Grant Maker';
+    const isSuperAdmin = user?.role === 'Super Admin';
+    const canUpdateStatus = isSuperAdmin || isApprover;
+
 
     const totalPossiblePoints = useMemo(() => {
         if (!grant) return 0;
@@ -68,7 +71,31 @@ export default function ApplicationViewerPage() {
     }, [answers]);
 
     const handleAnswerFieldChange = (answerId, field, value) => {
-        setAnswers(prev => prev.map(a => a._id === answerId ? { ...a, [field]: value } : a));
+        setAnswers(prevAnswers =>
+            prevAnswers.map(a => {
+                if (a._id === answerId) {
+                    let updatedValue = value;
+                    if (field === 'reviewerScore') {
+                        const question = grant.applicationQuestions.find(q => q._id === a.questionId);
+                        const maxPoints = question ? question.points : 0;
+                        const numericValue = Number(value);
+    
+                        if (!isNaN(numericValue)) {
+                            if (numericValue > maxPoints) {
+                                updatedValue = maxPoints;
+                            } else if (numericValue < 0) {
+                                updatedValue = 0;
+                            }
+                        } else if (value !== '') {
+                            // If user types non-numeric characters, reset to empty or keep previous value
+                            updatedValue = a.reviewerScore || ''; 
+                        }
+                    }
+                    return { ...a, [field]: updatedValue };
+                }
+                return a;
+            })
+        );
     };
 
     const handleSaveScores = async () => {
@@ -276,7 +303,7 @@ export default function ApplicationViewerPage() {
                                     </div>
                                 </div>
                                 <div className="flex flex-col justify-between gap-2">
-                                    {selectedApp.status === 'Submitted' && isGrantMaker ? (
+                                    {selectedApp.status === 'Submitted' && isSuperAdmin ? (
                                         <div className="flex items-center gap-2">
                                             <button onClick={() => handleStatusChange(selectedApp, 'In Review')} className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
                                                <ArrowRightCircle size={16}/> Move to Review
@@ -292,7 +319,7 @@ export default function ApplicationViewerPage() {
                                                 value={selectedApp.status} 
                                                 onChange={(e) => handleStatusChange(selectedApp, e.target.value)}
                                                 className="w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700"
-                                                disabled={!isGrantMaker && !isApprover}
+                                                disabled={!canUpdateStatus}
                                             >
                                                 <option disabled={selectedApp.status !== 'Submitted'}>Submitted</option>
                                                 <option>In Review</option>
