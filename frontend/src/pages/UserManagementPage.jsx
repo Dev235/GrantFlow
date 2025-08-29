@@ -1,4 +1,3 @@
-// frontend/src/pages/UserManagementPage.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
@@ -211,7 +210,11 @@ export default function UserManagementPage() {
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [userToProcess, setUserToProcess] = useState(null);
     const [filter, setFilter] = useState('All');
-
+    
+    // ✨ Pagination states
+    const [currentPage, setCurrentPage] = useState(1);
+    const usersPerPage = 10;
+    
     useEffect(() => {
         const fetchUsers = async () => {
             if (!currentUser?.token) return;
@@ -297,9 +300,22 @@ export default function UserManagementPage() {
     };
 
     const filteredUsers = useMemo(() => {
-        if (filter === 'All') return users;
-        return users.filter(u => u.verificationStatus === filter);
+        const filtered = filter === 'All' ? users : users.filter(u => u.verificationStatus === filter);
+        setCurrentPage(1); // Reset page to 1 when filter changes
+        return filtered;
     }, [users, filter]);
+
+    // ✨ Pagination logic
+    const indexOfLastUser = currentPage * usersPerPage;
+    const indexOfFirstUser = indexOfLastUser - usersPerPage;
+    const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+    const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+    
+    const goToPage = (page) => {
+        if (page >= 1 && page <= totalPages) {
+            setCurrentPage(page);
+        }
+    };
 
     if (loading) return <div>Loading users...</div>;
     if (error) return <div className="text-red-500 bg-red-50 p-3 rounded-md">{error}</div>;
@@ -334,7 +350,7 @@ export default function UserManagementPage() {
                         </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                        {filteredUsers.map(u => (
+                        {currentUsers.map(u => (
                             <tr key={u._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{u.name}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{u.email}</td>
@@ -362,6 +378,28 @@ export default function UserManagementPage() {
                     </tbody>
                 </table>
             </div>
+            {/* Pagination Controls */}
+            {filteredUsers.length > usersPerPage && (
+                <div className="flex justify-between items-center mt-4">
+                    <button
+                        onClick={() => goToPage(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="px-3 py-1 rounded-md bg-gray-200 dark:bg-gray-700 disabled:opacity-50"
+                    >
+                        Prev
+                    </button>
+                    <span className="text-sm text-gray-600 dark:text-gray-300">
+                        Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                        onClick={() => goToPage(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="px-3 py-1 rounded-md bg-gray-200 dark:bg-gray-700 disabled:opacity-50"
+                    >
+                        Next
+                    </button>
+                </div>
+            )}
             <AddUserModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onUserAdded={handleUserAdded} />
             <ViewUserModal user={userToProcess} isOpen={isViewModalOpen} onClose={() => setIsViewModalOpen(false)} onVerify={handleVerifyUser} />
             <ConfirmationModal

@@ -7,7 +7,7 @@ const bcrypt = require('bcryptjs');
 const userSchema = mongoose.Schema(
   {
     name: { type: String, required: true },
-    email: { type: String, required: true },
+    email: { type: String, required: true, lowercase: true }, // Added lowercase property here
     password: { type: String, required: true },
     role: {
       type: String,
@@ -65,4 +65,3 @@ userSchema.pre('save', async function (next) {
 const User = mongoose.model('User', userSchema);
 
 module.exports = User;
-

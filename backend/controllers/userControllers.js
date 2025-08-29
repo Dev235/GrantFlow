@@ -24,6 +24,9 @@ const updateUserProfile = async (req, res) => {
 
         if (user) {
             user.name = req.body.name || user.name;
+            if (req.body.email) {
+                user.email = req.body.email.toLowerCase(); // Ensure email is lowercased on update
+            }
             if (req.body.password) {
                 user.password = req.body.password;
             }
@@ -68,13 +71,15 @@ const getAllUsers = async (req, res) => {
 
 const createUser = async (req, res) => {
     const { name, email, password, role } = req.body;
+    const normalizedEmail = email.toLowerCase(); // Convert email to lowercase
+
     try {
-        const userExists = await User.findOne({ email });
+        const userExists = await User.findOne({ email: normalizedEmail });
         if (userExists) {
             return res.status(400).json({ message: 'User with this email already exists' });
         }
 
-        const newUser = await User.create({ name, email, password, role });
+        const newUser = await User.create({ name, email: normalizedEmail, password, role });
         if (newUser) {
             await logAction(req.user, 'USER_CREATED', { createdUserId: newUser._id, createdUserEmail: newUser.email, role: newUser.role });
             res.status(201).json({
@@ -164,12 +169,33 @@ const resetUserPassword = async (req, res) => {
 
 const getAssignableUsers = async (req, res) => {
     try {
-        const users = await User.find({ role: { $in: ['Reviewer', 'Approver'] } }).select('name email role');
+        // Find the user's organization ID from the authenticated request
+        const userOrganizationId = req.user.organization;
+
+        // If the user is a Grant Maker or Super Admin but not part of an organization, return an empty array
+        // or if user role is Super Admin, they can see all users.
+        if (req.user.role === 'Super Admin') {
+          const users = await User.find({ role: { $in: ['Reviewer', 'Approver'] } }).select('name email role');
+          return res.json(users);
+        }
+
+        if (!userOrganizationId) {
+             return res.json([]);
+        }
+
+        // Now, find users who are part of that same organization AND have the role of Reviewer or Approver
+        const users = await User.find({
+            organization: userOrganizationId,
+            role: { $in: ['Reviewer', 'Approver'] }
+        }).select('name email role');
         res.json(users);
+
     } catch (error) {
+        console.error("Error in getAssignableUsers:", error);
         res.status(500).json({ message: 'Server Error' });
     }
 };
+
 
 
 module.exports = { 

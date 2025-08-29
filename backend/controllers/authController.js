@@ -7,9 +7,12 @@ const { logAction } = require('../utils/auditLogger');
 
 const registerUser = async (req, res) => {
   const { name, email, password, role, organizationId, newOrganizationName } = req.body;
+  
+  // Convert email to lowercase for consistent storage and lookup
+  const normalizedEmail = email.toLowerCase();
 
   try {
-    const userExists = await User.findOne({ email, role });
+    const userExists = await User.findOne({ email: normalizedEmail, role });
     if (userExists) {
       res.status(400);
       throw new Error(`A user with this email already exists for the ${role} role.`);
@@ -21,7 +24,7 @@ const registerUser = async (req, res) => {
 
     const user = await User.create({
       name,
-      email,
+      email: normalizedEmail, // Use the normalized email
       password,
       role,
       joinRequestStatus: joinStatus,
@@ -82,9 +85,12 @@ const registerUser = async (req, res) => {
 
 const loginUser = async (req, res) => {
   const { email, password, role } = req.body;
+  
+  // Convert email to lowercase for consistent lookup
+  const normalizedEmail = email.toLowerCase();
 
   try {
-    const user = await User.findOne({ email, role });
+    const user = await User.findOne({ email: normalizedEmail, role }); // Use normalized email in query
 
     if (user && (await user.matchPassword(password))) {
       await logAction(user, 'USER_LOGIN', { email: user.email });
