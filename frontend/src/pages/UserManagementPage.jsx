@@ -5,7 +5,6 @@ import { format } from 'date-fns';
 import { User, Briefcase, Shield, PlusCircle, Trash2, CheckCircle, AlertCircle, Eye, X, Key } from 'lucide-react';
 import ConfirmationModal from '../components/common/ConfirmationModal';
 
-// ... (AddUserModal component remains the same)
 const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -53,32 +52,32 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4" onClick={onClose}>
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md" onClick={e => e.stopPropagation()}>
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md" onClick={e => e.stopPropagation()}>
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    <h3 className="text-lg font-medium text-gray-900">Add New User</h3>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">Add New User</h3>
                     {error && <div className="p-2 bg-red-100 text-red-700 rounded-md text-sm">{error}</div>}
                     <div>
-                        <label className="text-sm font-medium text-gray-700">Full Name</label>
-                        <input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="w-full px-3 py-2 mt-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
+                        <input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="w-full px-3 py-2 mt-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600" />
                     </div>
                      <div>
-                        <label className="text-sm font-medium text-gray-700">Email Address</label>
-                        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full px-3 py-2 mt-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email Address</label>
+                        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full px-3 py-2 mt-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600" />
                     </div>
                     <div>
-                        <label className="text-sm font-medium text-gray-700">Password</label>
-                        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="w-full px-3 py-2 mt-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="w-full px-3 py-2 mt-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600" />
                     </div>
                     <div>
-                        <label className="text-sm font-medium text-gray-700">Role</label>
-                        <select value={role} onChange={(e) => setRole(e.target.value)} className="w-full px-3 py-2 mt-1 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Role</label>
+                        <select value={role} onChange={(e) => setRole(e.target.value)} className="w-full px-3 py-2 mt-1 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600">
                             <option value="Applicant">Applicant</option>
                             <option value="Grant Maker">Grant Maker</option>
                             <option value="Super Admin">Super Admin</option>
                         </select>
                     </div>
                     <div className="flex justify-end gap-3 pt-4">
-                        <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border rounded-md hover:bg-gray-100">Cancel</button>
+                        <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border rounded-md hover:bg-gray-100 dark:bg-gray-600 dark:text-gray-200 dark:border-gray-500 dark:hover:bg-gray-500">Cancel</button>
                         <button type="submit" disabled={loading} className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:bg-indigo-300">
                             {loading ? 'Adding...' : 'Add User'}
                         </button>
@@ -89,8 +88,6 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
     );
 };
 
-
-// ViewUserModal Component
 const ViewUserModal = ({ user, isOpen, onClose, onVerify }) => {
     const { user: currentUser } = useAuth();
     const [newPassword, setNewPassword] = useState('');
@@ -130,20 +127,19 @@ const ViewUserModal = ({ user, isOpen, onClose, onVerify }) => {
 
     const DetailItem = ({ label, value }) => (
         <div>
-            <p className="text-sm text-gray-500">{label}</p>
-            <p className="font-medium text-gray-800">{value || 'N/A'}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
+            <p className="font-medium text-gray-800 dark:text-white">{value || 'N/A'}</p>
         </div>
     );
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4" onClick={onClose}>
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
-                <div className="flex justify-between items-center p-4 border-b">
-                    <h3 className="text-xl font-bold text-gray-900">User Details</h3>
-                    <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-200"><X size={20} /></button>
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                <div className="flex justify-between items-center p-4 border-b dark:border-gray-700">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">User Details</h3>
+                    <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"><X size={20} /></button>
                 </div>
                 <div className="p-6 overflow-y-auto space-y-6">
-                    {/* ... User details section ... */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="md:col-span-1 flex flex-col items-center">
                             <img src={user.profile?.profilePictureUrl ? `${import.meta.env.VITE_API_BASE_URL}${user.profile.profilePictureUrl}` : `https://ui-avatars.com/api/?name=${user.name}&background=random&color=fff`} alt="Profile" className="w-32 h-32 rounded-full object-cover" />
@@ -164,21 +160,20 @@ const ViewUserModal = ({ user, isOpen, onClose, onVerify }) => {
                         </div>
                     </div>
                     <div>
-                        <h4 className="font-semibold text-gray-700 mb-2">IC Picture</h4>
+                        <h4 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">IC Picture</h4>
                         {user.profile?.icPictureUrl ? (
                              <img src={`${import.meta.env.VITE_API_BASE_URL}${user.profile.icPictureUrl}`} alt="IC" className="rounded-lg border max-w-sm" />
-                        ) : <p className="text-gray-500">Not provided.</p>}
+                        ) : <p className="text-gray-500 dark:text-gray-400">Not provided.</p>}
                     </div>
 
-                    {/* --- NEW PASSWORD RESET SECTION --- */}
-                    <div className="border-t pt-4">
-                         <h4 className="font-semibold text-gray-700 mb-2">Reset Password</h4>
+                    <div className="border-t dark:border-gray-700 pt-4">
+                         <h4 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">Reset Password</h4>
                          <div className="flex items-center gap-2">
                             <input 
                                 type="password" 
                                 value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
-                                className="flex-grow px-3 py-2 border rounded-lg"
+                                className="flex-grow px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
                                 placeholder="Enter new password for user"
                             />
                             <button onClick={handleResetPassword} className="px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-md hover:bg-orange-600 inline-flex items-center gap-2">
@@ -192,8 +187,8 @@ const ViewUserModal = ({ user, isOpen, onClose, onVerify }) => {
                          )}
                     </div>
                 </div>
-                 <div className="p-4 border-t bg-gray-50 flex justify-end gap-3">
-                    <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border rounded-md hover:bg-gray-100">Close</button>
+                 <div className="p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
+                    <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border rounded-md hover:bg-gray-100 dark:bg-gray-600 dark:text-gray-200 dark:border-gray-500 dark:hover:bg-gray-500">Close</button>
                     {user.verificationStatus === 'Pending' && (
                         <button onClick={() => onVerify(user)} className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 inline-flex items-center gap-2">
                             <CheckCircle size={16} /> Verify User
@@ -312,51 +307,51 @@ export default function UserManagementPage() {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-gray-800">User Management</h1>
+                <h1 className="text-3xl font-bold text-gray-800 dark:text-white">User Management</h1>
                 <button onClick={() => setIsAddModalOpen(true)} className="inline-flex items-center gap-2 px-4 py-2 text-white bg-indigo-600 rounded-lg font-semibold hover:bg-indigo-700">
                     <PlusCircle size={20} /> Add New User
                 </button>
             </div>
-            <div className="bg-white p-4 rounded-xl shadow-md">
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md">
                 <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-medium text-sm text-gray-600">Filter by status:</p>
-                    <button onClick={() => setFilter('All')} className={`px-3 py-1 text-sm rounded-full ${filter === 'All' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}>All</button>
-                    <button onClick={() => setFilter('Verified')} className={`px-3 py-1 text-sm rounded-full ${filter === 'Verified' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}>Verified</button>
-                    <button onClick={() => setFilter('Pending')} className={`px-3 py-1 text-sm rounded-full ${filter === 'Pending' ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}>Pending for Verification</button>
-                    <button onClick={() => setFilter('Unverified')} className={`px-3 py-1 text-sm rounded-full ${filter === 'Unverified' ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}>Unverified</button>
+                    <p className="font-medium text-sm text-gray-600 dark:text-gray-300">Filter by status:</p>
+                    <button onClick={() => setFilter('All')} className={`px-3 py-1 text-sm rounded-full ${filter === 'All' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500'}`}>All</button>
+                    <button onClick={() => setFilter('Verified')} className={`px-3 py-1 text-sm rounded-full ${filter === 'Verified' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500'}`}>Verified</button>
+                    <button onClick={() => setFilter('Pending')} className={`px-3 py-1 text-sm rounded-full ${filter === 'Pending' ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500'}`}>Pending for Verification</button>
+                    <button onClick={() => setFilter('Unverified')} className={`px-3 py-1 text-sm rounded-full ${filter === 'Unverified' ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500'}`}>Unverified</button>
                 </div>
             </div>
-            <div className="bg-white rounded-xl shadow-md overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-700">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Email</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Role</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Joined</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         {filteredUsers.map(u => (
-                            <tr key={u._id} className="hover:bg-gray-50">
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{u.name}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{u.email}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            <tr key={u._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{u.name}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{u.email}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                                     <span className="inline-flex items-center gap-2">
                                         {getRoleIcon(u.role)}
                                         {u.role}
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm">{getStatusIndicator(u.verificationStatus)}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{format(new Date(u.createdAt), 'dd MMM yyyy')}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{format(new Date(u.createdAt), 'dd MMM yyyy')}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                                    <button onClick={() => handleViewUserClick(u)} className="p-2 text-indigo-600 rounded-md hover:bg-indigo-100" title="View Details"><Eye size={16} /></button>
+                                    <button onClick={() => handleViewUserClick(u)} className="p-2 text-indigo-600 rounded-md hover:bg-indigo-100 dark:hover:bg-indigo-900/50" title="View Details"><Eye size={16} /></button>
                                     <button
                                         onClick={() => handleDeleteClick(u)}
                                         disabled={u._id === currentUser._id}
-                                        className="p-2 text-red-500 rounded-md hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="p-2 text-red-500 rounded-md hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed dark:hover:bg-red-900/50"
                                         title={u._id === currentUser._id ? "Cannot delete yourself" : "Delete user"}
                                     >
                                         <Trash2 size={16} />

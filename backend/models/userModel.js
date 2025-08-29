@@ -4,36 +4,10 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-const userProfileSchema = new mongoose.Schema({
-  address: { type: String, default: '' },
-  icNumber: { type: String, default: '' },
-  icPictureUrl: { type: String, default: '' },
-  emergencyContact: { type: String, default: '' },
-  age: { type: Number },
-  incomeGroup: { 
-    type: String, 
-    enum: ['', 'B40', 'M40', 'T20'],
-    default: ''
-  },
-  income: { type: Number },
-  race: { 
-    type: String, 
-    enum: ['', 'Malay', 'Chinese', 'Indian', 'Other'],
-    default: ''
-  },
-  gender: { 
-    type: String, 
-    enum: ['', 'Male', 'Female'],
-    default: ''
-  },
-  profilePictureUrl: { type: String, default: '' },
-});
-
-
 const userSchema = mongoose.Schema(
   {
     name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
+    email: { type: String, required: true },
     password: { type: String, required: true },
     role: {
       type: String,
@@ -62,16 +36,17 @@ const userSchema = mongoose.Schema(
       enum: ['Unverified', 'Pending', 'Verified'],
       default: 'Unverified',
     },
-
     profile: {
-      type: Object, // Simplified for brevity, assuming userProfileSchema is defined elsewhere
+      type: Object,
       default: () => ({})
     }
   },
   { timestamps: true }
 );
 
-// Method to compare entered password with the hashed password in the database
+// Create a compound index to ensure email is unique per role
+userSchema.index({ email: 1, role: 1 }, { unique: true });
+
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
@@ -81,7 +56,7 @@ userSchema.pre('save', async function (next) {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
   }
-  if (this.role === 'Super Admin') {
+  if (['Super Admin', 'Reviewer', 'Approver'].includes(this.role)) {
     this.verificationStatus = 'Verified';
   }
   next();
@@ -90,3 +65,4 @@ userSchema.pre('save', async function (next) {
 const User = mongoose.model('User', userSchema);
 
 module.exports = User;
+

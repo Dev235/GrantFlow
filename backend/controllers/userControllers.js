@@ -1,4 +1,4 @@
-// backend/controllers/userController.js
+// backend/controllers/userControllers.js
 const User = require('../models/userModel');
 const { logAction } = require('../utils/auditLogger');
 const generateToken = require('../utils/generateToken');
@@ -134,9 +134,6 @@ const verifyUser = async (req, res) => {
     }
 };
 
-// @desc    Reset a user's password
-// @route   PUT /api/users/:id/reset-password
-// @access  Private (Super Admin)
 const resetUserPassword = async (req, res) => {
     try {
         const { password } = req.body;
@@ -167,8 +164,7 @@ const resetUserPassword = async (req, res) => {
 
 const getAssignableUsers = async (req, res) => {
     try {
-        // For now, any Grant Maker or Super Admin can be assigned
-        const users = await User.find({ role: { $in: ['Grant Maker', 'Super Admin'] } }).select('name email role');
+        const users = await User.find({ role: { $in: ['Reviewer', 'Approver'] } }).select('name email role');
         res.json(users);
     } catch (error) {
         res.status(500).json({ message: 'Server Error' });
@@ -176,7 +172,6 @@ const getAssignableUsers = async (req, res) => {
 };
 
 
-// (existing exports)
 module.exports = { 
     getUserProfile, 
     updateUserProfile, 
@@ -185,5 +180,5 @@ module.exports = {
     deleteUser, 
     verifyUser, 
     resetUserPassword,
-    getAssignableUsers // <-- Export new function
+    getAssignableUsers
 };

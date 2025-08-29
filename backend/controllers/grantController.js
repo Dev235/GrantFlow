@@ -1,6 +1,7 @@
 // backend/controllers/grantController.js
 const Grant = require('../models/grantModel');
 const Application = require('../models/applicationModel');
+const mongoose = require('mongoose');
 const { logAction } = require('../utils/auditLogger');
 
 
@@ -9,7 +10,6 @@ const { logAction } = require('../utils/auditLogger');
 // @access  Public
 const getOpenGrants = async (req, res) => {
   try {
-    // This now fetches 'Active' grants instead of 'Open'
     const grants = await Grant.find({ status: 'Active' }).populate('grantMaker', 'name email').sort({ createdAt: -1 });
     res.json(grants);
   } catch (error) {
@@ -64,13 +64,14 @@ const createGrant = async (req, res) => {
   if (req.user.verificationStatus !== 'Verified') {
     return res.status(403).json({ message: 'Your account must be verified to create grants.' });
   }
-  const { title, description, amount, category, deadline, applicationQuestions, reviewers, approvers } = req.body;
+  const { title, description, amount, category, deadline, applicationQuestions, reviewers, approvers, status } = req.body;
   try {
     const grant = new Grant({
       title, description, amount, category, deadline, applicationQuestions,
       grantMaker: req.user._id,
       reviewers,
       approvers,
+      status,
     });
     const createdGrant = await grant.save();
     await logAction(req.user, 'GRANT_CREATED', { grantId: createdGrant._id, grantTitle: createdGrant.title });
@@ -138,7 +139,6 @@ const deleteGrant = async (req, res) => {
         const grant = await Grant.findById(req.params.id);
 
         if (grant) {
-            // Allow delete if user is the owner OR a Super Admin
             if (grant.grantMaker.toString() !== req.user._id.toString() && req.user.role !== 'Super Admin') {
                 return res.status(401).json({ message: 'Not authorized to delete this grant' });
             }
@@ -157,5 +157,76 @@ const deleteGrant = async (req, res) => {
     }
 };
 
+const getGrantsForReview = async (req, res) => {
+    try {
+        const grants = await Grant.find({ reviewers: req.user._id, status: 'Active' })
+                                  .select('title')
+                                  .lean();
 
-module.exports = { getOpenGrants, getMyGrants, getAllGrants, getGrantById, createGrant, updateGrant, deleteGrant };
+        const grantsWithCounts = await Promise.all(grants.map(async (grant) => {
+            const reviewedCount = await Application.countDocuments({
+                grant: grant._id,
+                status: { $in: ['Approved', 'Rejected'] } 
+            });
+            const pendingReviewCount = await Application.countDocuments({
+                grant: grant._id,
+                status: 'In Review'
+            });
+            return { ...grant, reviewedCount, pendingReviewCount };
+        }));
+
+        res.json(grantsWithCounts);
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error: Could not fetch grants for review.' });
+    }
+};
+
+const getGrantsForApproval = async (req, res) => {
+    try {
+        const grants = await Grant.find({ approvers: req.user._id, status: 'Active' })
+                                  .select('title')
+                                  .lean();
+        
+        const grantsWithCounts = await Promise.all(grants.map(async (grant) => {
+            const approvedCount = await Application.countDocuments({
+                grant: grant._id,
+                status: 'Approved'
+            });
+            // Approvers act on applications that have been reviewed but not yet decided
+            const pendingApprovalCount = await Application.countDocuments({
+                grant: grant._id,
+                status: 'In Review'
+            });
+            return { ...grant, approvedCount, pendingApprovalCount };
+        }));
+
+        res.json(grantsWithCounts);
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error: Could not fetch grants for approval.' });
+    }
+};
+
+const getReviewCount = async (req, res) => {
+    try {
+        const grants = await Grant.find({ reviewers: req.user._id, status: 'Active' }).select('_id');
+        const grantIds = grants.map(g => g._id);
+        const count = await Application.countDocuments({ grant: { $in: grantIds }, status: 'In Review' });
+        res.json({ count });
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+const getApprovalCount = async (req, res) => {
+    try {
+        const grants = await Grant.find({ approvers: req.user._id, status: 'Active' }).select('_id');
+        const grantIds = grants.map(g => g._id);
+        // Approvers look at applications that are 'In Review'
+        const count = await Application.countDocuments({ grant: { $in: grantIds }, status: 'In Review' });
+        res.json({ count });
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+module.exports = { getOpenGrants, getMyGrants, getAllGrants, getGrantById, createGrant, updateGrant, deleteGrant, getGrantsForReview, getGrantsForApproval, getReviewCount, getApprovalCount };

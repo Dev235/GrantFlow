@@ -21,7 +21,6 @@ const answerSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.Mixed, // Can be String, Number, Date, or a file path (String)
     required: true,
   },
-  // NEW: Fields for reviewer's score and comments per answer
   reviewerScore: {
     type: Number,
     default: 0
@@ -65,6 +64,10 @@ const applicationSchema = new mongoose.Schema(
     },
     answers: [answerSchema],
     reviewedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    approvedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     }

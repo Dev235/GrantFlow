@@ -1,7 +1,7 @@
 // backend/controllers/authController.js
 const User = require('../models/userModel');
 const Organization = require('../models/organizationModel');
-const JoinRequest = require('../models/joinRequestModel'); // Import JoinRequest model
+const JoinRequest = require('../models/joinRequestModel');
 const generateToken = require('../utils/generateToken');
 const { logAction } = require('../utils/auditLogger');
 
@@ -9,15 +9,15 @@ const registerUser = async (req, res) => {
   const { name, email, password, role, organizationId, newOrganizationName } = req.body;
 
   try {
-    const userExists = await User.findOne({ email });
+    const userExists = await User.findOne({ email, role });
     if (userExists) {
       res.status(400);
-      throw new Error('User already exists');
+      throw new Error(`A user with this email already exists for the ${role} role.`);
     }
 
     let organization = null;
     let orgRole = null;
-    let joinStatus = 'None'; // Default for Applicants
+    let joinStatus = 'None';
 
     const user = await User.create({
       name,
@@ -47,7 +47,6 @@ const registerUser = async (req, res) => {
             organization = await Organization.findById(organizationId);
             if (!organization) throw new Error('Selected organization not found.');
             
-            // Create a join request instead of adding directly
             await JoinRequest.create({ user: user._id, organization: organizationId });
             user.joinRequestStatus = 'Pending';
 
@@ -85,12 +84,7 @@ const loginUser = async (req, res) => {
   const { email, password, role } = req.body;
 
   try {
-    const query = { email };
-    if (role) {
-        query.role = role;
-    }
-
-    const user = await User.findOne(query);
+    const user = await User.findOne({ email, role });
 
     if (user && (await user.matchPassword(password))) {
       await logAction(user, 'USER_LOGIN', { email: user.email });

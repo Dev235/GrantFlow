@@ -49,7 +49,7 @@ const submitApplication = async (req, res) => {
 
 // @desc    Score an application
 // @route   PUT /api/applications/:id/score
-// @access  Private (Grant Maker, Super Admin)
+// @access  Private (Reviewer)
 const scoreApplication = async (req, res) => {
     try {
         const { answers } = req.body;
@@ -59,15 +59,31 @@ const scoreApplication = async (req, res) => {
             return res.status(404).json({ message: 'Application not found' });
         }
 
-        if (application.grantMaker.toString() !== req.user._id.toString() && req.user.role !== 'Super Admin') {
-            return res.status(401).json({ message: 'Not authorized' });
+        // FIX: Fetch the grant to validate scores against max points.
+        const grant = await Grant.findById(application.grant);
+        if (!grant) {
+            return res.status(404).json({ message: 'Associated grant not found' });
         }
+
+        const questionPointsMap = new Map(
+            grant.applicationQuestions.map(q => [q._id.toString(), q.points])
+        );
 
         let totalScore = 0;
         application.answers.forEach(appAnswer => {
             const submittedAnswer = answers.find(a => a._id.toString() === appAnswer._id.toString());
             if (submittedAnswer) {
-                const score = Number(submittedAnswer.reviewerScore) || 0;
+                const maxPoints = questionPointsMap.get(appAnswer.questionId.toString()) || 0;
+                let score = Number(submittedAnswer.reviewerScore) || 0;
+
+                // FIX: Check if the score exceeds the max points for the question.
+                if (score > maxPoints) {
+                    score = maxPoints; // Cap the score at the maximum allowed.
+                }
+                if (score < 0) {
+                    score = 0; // Score cannot be negative.
+                }
+
                 appAnswer.reviewerScore = score;
                 appAnswer.reviewerComments = submittedAnswer.reviewerComments || '';
                 totalScore += score;
@@ -87,15 +103,15 @@ const scoreApplication = async (req, res) => {
 };
 
 
-// ... other controller functions remain the same ...
-
-// @desc    Get all applications for a specific grant (for Grant Makers)
+// @desc    Get all applications for a specific grant
 // @route   GET /api/applications/grant/:grantId
-// @access  Private (Grant Maker, Super Admin)
+// @access  Private (Grant Maker, Super Admin, Reviewer, Approver)
 const getApplicationsForGrant = async (req, res) => {
     try {
         const applications = await Application.find({ grant: req.params.grantId })
             .populate('applicant', 'name email')
+            .populate('reviewedBy', 'name')
+            .populate('approvedBy', 'name')
             .sort({ score: -1 });
         res.json(applications);
     } catch (error) {
@@ -118,18 +134,21 @@ const getMyApplications = async (req, res) => {
 
 // @desc    Update an application's status
 // @route   PUT /api/applications/:id/status
-// @access  Private (Grant Maker, Super Admin)
+// @access  Private (Super Admin, Approver)
 const updateApplicationStatus = async (req, res) => {
     try {
         const application = await Application.findById(req.params.id);
         if (!application) return res.status(404).json({ message: 'Application not found' });
         
-        if (application.grantMaker.toString() !== req.user._id.toString() && req.user.role !== 'Super Admin') {
-            return res.status(401).json({ message: 'Not authorized' });
+        const oldStatus = application.status;
+        const newStatus = req.body.status;
+
+        application.status = newStatus || application.status;
+
+        if (newStatus === 'Approved') {
+            application.approvedBy = req.user._id;
         }
 
-        const oldStatus = application.status;
-        application.status = req.body.status || application.status;
         const updatedApplication = await application.save();
         await logAction(req.user, 'APPLICATION_STATUS_CHANGED', { applicationId: application._id, from: oldStatus, to: updatedApplication.status });
         res.json(updatedApplication);
@@ -140,16 +159,12 @@ const updateApplicationStatus = async (req, res) => {
 
 // @desc    Update an application's flag
 // @route   PUT /api/applications/:id/flag
-// @access  Private (Grant Maker, Super Admin)
+// @access  Private (Grant Maker, Super Admin, Reviewer)
 const updateApplicationFlag = async (req, res) => {
     try {
         const application = await Application.findById(req.params.id);
         if (!application) {
             return res.status(404).json({ message: 'Application not found' });
-        }
-
-        if (application.grantMaker.toString() !== req.user._id.toString() && req.user.role !== 'Super Admin') {
-            return res.status(401).json({ message: 'Not authorized' });
         }
 
         const oldFlag = application.flag;

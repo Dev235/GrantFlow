@@ -5,6 +5,35 @@ import { useAuth } from '../context/AuthContext';
 import { PlusCircle, Trash2, Award, Users, UserCheck } from 'lucide-react';
 import { format } from 'date-fns';
 
+const UserAssigner = ({ users, selectedUsers, onChange, title, icon }) => {
+    const handleToggle = (userId) => {
+        const newSelection = selectedUsers.includes(userId)
+            ? selectedUsers.filter(id => id !== userId)
+            : [...selectedUsers, userId];
+        onChange(newSelection);
+    };
+
+    return (
+        <div>
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">{icon} {title}</label>
+            <div className="mt-2 p-3 border border-gray-300 dark:border-gray-600 rounded-lg max-h-40 overflow-y-auto space-y-2 bg-white dark:bg-gray-700">
+                {users.length > 0 ? users.map(user => (
+                    <div key={user._id} className="flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            id={`${title}-${user._id}`}
+                            checked={selectedUsers.includes(user._id)}
+                            onChange={() => handleToggle(user._id)}
+                            className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                        />
+                        <label htmlFor={`${title}-${user._id}`} className="text-sm text-gray-800 dark:text-gray-200">{user.name} ({user.email})</label>
+                    </div>
+                )) : <p className="text-sm text-gray-500 dark:text-gray-400">No users available to assign.</p>}
+            </div>
+        </div>
+    );
+};
+
 export default function EditGrantPage() {
     const { id: grantId } = useParams();
     const { user } = useAuth();
@@ -19,7 +48,6 @@ export default function EditGrantPage() {
         const fetchGrantAndUsers = async () => {
             if (!user?.token) return;
             try {
-                // Fetch grant details
                 const grantResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/grants/${grantId}`, {
                     headers: { 'Authorization': `Bearer ${user.token}` }
                 });
@@ -30,7 +58,6 @@ export default function EditGrantPage() {
                 }
                 setGrant(grantData);
 
-                // Fetch assignable users
                 const usersResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/assignable`, {
                     headers: { 'Authorization': `Bearer ${user.token}` }
                 });
@@ -46,11 +73,6 @@ export default function EditGrantPage() {
         };
         if(user) fetchGrantAndUsers();
     }, [grantId, user]);
-
-    const handleMultiSelectChange = (e, field) => {
-        const selectedIds = Array.from(e.target.selectedOptions, option => option.value);
-        setGrant(prev => ({ ...prev, [field]: selectedIds }));
-    };
 
     const handleGrantChange = (e) => {
         const { name, value } = e.target;
@@ -105,37 +127,37 @@ export default function EditGrantPage() {
 
     return (
         <div className="max-w-4xl mx-auto">
-            <h1 className="text-3xl font-bold text-gray-800 mb-6">Edit Grant</h1>
+            <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">Edit Grant</h1>
             {grant && (
-                <form onSubmit={handleSubmit} className="space-y-8 bg-white p-8 rounded-xl shadow-md">
+                <form onSubmit={handleSubmit} className="space-y-8 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-md">
                     {error && <div className="p-3 bg-red-100 text-red-700 rounded-lg">{error}</div>}
                     
                     <div className="space-y-4">
-                        <h2 className="text-xl font-semibold text-gray-700 border-b pb-2">Grant Details</h2>
+                        <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600 pb-2">Grant Details</h2>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Grant Title</label>
-                            <input type="text" name="title" value={grant.title} onChange={handleGrantChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required />
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Grant Title</label>
+                            <input type="text" name="title" value={grant.title} onChange={handleGrantChange} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200" required />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Description</label>
-                            <textarea name="description" value={grant.description} onChange={handleGrantChange} rows="4" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required></textarea>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
+                            <textarea name="description" value={grant.description} onChange={handleGrantChange} rows="4" className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200" required></textarea>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Amount (MYR)</label>
-                                <input type="number" name="amount" value={grant.amount} onChange={handleGrantChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required />
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Amount (MYR)</label>
+                                <input type="number" name="amount" value={grant.amount} onChange={handleGrantChange} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200" required />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Category</label>
-                                <input type="text" name="category" value={grant.category} onChange={handleGrantChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="e.g., Education, Arts" required />
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
+                                <input type="text" name="category" value={grant.category} onChange={handleGrantChange} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200" placeholder="e.g., Education, Arts" required />
                             </div>
                              <div>
-                                <label className="block text-sm font-medium text-gray-700">Application Deadline</label>
-                                <input type="date" name="deadline" value={grant.deadline} onChange={handleGrantChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required />
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Application Deadline</label>
+                                <input type="date" name="deadline" value={grant.deadline} onChange={handleGrantChange} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200" required />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Status</label>
-                                <select name="status" value={grant.status} onChange={handleGrantChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-white">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
+                                <select name="status" value={grant.status} onChange={handleGrantChange} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200">
                                     <option value="Draft">Draft</option>
                                     <option value="Active">Active</option>
                                     <option value="Inactive">Inactive</option>
@@ -145,36 +167,38 @@ export default function EditGrantPage() {
                     </div>
 
                      <div className="space-y-4">
-                        <h2 className="text-xl font-semibold text-gray-700 border-b pb-2">Workflow Assignments</h2>
+                        <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600 pb-2">Workflow Assignments</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700"><Users size={16}/> Assign Reviewers</label>
-                                <select multiple value={grant.reviewers} onChange={(e) => handleMultiSelectChange(e, 'reviewers')} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm h-32">
-                                    {assignableUsers.map(u => <option key={u._id} value={u._id}>{u.name} ({u.email})</option>)}
-                                </select>
-                            </div>
-                             <div>
-                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700"><UserCheck size={16}/> Assign Approvers</label>
-                                <select multiple value={grant.approvers} onChange={(e) => handleMultiSelectChange(e, 'approvers')} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm h-32">
-                                    {assignableUsers.map(u => <option key={u._id} value={u._id}>{u.name} ({u.email})</option>)}
-                                </select>
-                            </div>
+                            <UserAssigner 
+                                users={assignableUsers.filter(u => u.role === 'Reviewer')}
+                                selectedUsers={grant.reviewers}
+                                onChange={(selection) => setGrant(prev => ({ ...prev, reviewers: selection }))}
+                                title="Assign Reviewers"
+                                icon={<Users size={16}/>}
+                            />
+                            <UserAssigner 
+                                users={assignableUsers.filter(u => u.role === 'Approver')}
+                                selectedUsers={grant.approvers}
+                                onChange={(selection) => setGrant(prev => ({ ...prev, approvers: selection }))}
+                                title="Assign Approvers"
+                                icon={<UserCheck size={16}/>}
+                            />
                         </div>
                     </div>
 
                     <div className="space-y-4">
-                        <h2 className="text-xl font-semibold text-gray-700 border-b pb-2">Application Form Questions</h2>
+                        <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600 pb-2">Application Form Questions</h2>
                         {grant.applicationQuestions.map((q, index) => (
-                            <div key={index} className="p-4 border border-gray-200 rounded-lg space-y-3 bg-gray-50">
+                            <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3 bg-gray-50 dark:bg-gray-700/50">
                                 <div className="flex justify-between items-center">
-                                    <label className="block text-sm font-medium text-gray-700">Question {index + 1}</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Question {index + 1}</label>
                                     <button type="button" onClick={() => removeQuestion(index)} className="text-red-500 hover:text-red-700 text-sm font-medium flex items-center gap-1">
                                         <Trash2 size={14}/> Remove
                                     </button>
                                 </div>
-                                <input type="text" name="questionText" value={q.questionText} onChange={(e) => handleQuestionChange(index, e)} placeholder="Enter your question" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required />
+                                <input type="text" name="questionText" value={q.questionText} onChange={(e) => handleQuestionChange(index, e)} placeholder="Enter your question" className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200" required />
                                 <div className="grid grid-cols-3 items-center gap-4">
-                                    <select name="questionType" value={q.questionType} onChange={(e) => handleQuestionChange(index, e)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-white">
+                                    <select name="questionType" value={q.questionType} onChange={(e) => handleQuestionChange(index, e)} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200">
                                         <option value="text">Short Text</option>
                                         <option value="textarea">Paragraph</option>
                                         <option value="number">Number</option>
@@ -183,16 +207,16 @@ export default function EditGrantPage() {
                                     </select>
                                     <div className="flex items-center">
                                         <input type="checkbox" name="isRequired" checked={q.isRequired} onChange={(e) => handleQuestionChange(index, e)} className="h-4 w-4 text-indigo-600 border-gray-300 rounded" />
-                                        <label className="ml-2 block text-sm text-gray-900">Required</label>
+                                        <label className="ml-2 block text-sm text-gray-900 dark:text-gray-200">Required</label>
                                     </div>
                                     <div className="relative">
                                         <Award className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                                        <input type="number" name="points" value={q.points} onChange={(e) => handleQuestionChange(index, e)} className="pl-9 pr-2 py-2 mt-1 block w-full rounded-md border-gray-300 shadow-sm" min="0"/>
+                                        <input type="number" name="points" value={q.points} onChange={(e) => handleQuestionChange(index, e)} className="pl-9 pr-2 py-2 mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200" min="0"/>
                                     </div>
                                 </div>
                             </div>
                         ))}
-                        <button type="button" onClick={addQuestion} className="w-full py-2 text-indigo-600 border-2 border-dashed border-indigo-400 rounded-lg hover:bg-indigo-50 flex items-center justify-center gap-2">
+                        <button type="button" onClick={addQuestion} className="w-full py-2 text-indigo-600 border-2 border-dashed border-indigo-400 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/50 flex items-center justify-center gap-2">
                             <PlusCircle size={18}/> Add Custom Question
                         </button>
                     </div>
@@ -205,3 +229,4 @@ export default function EditGrantPage() {
         </div>
     );
 };
+
