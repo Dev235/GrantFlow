@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, Inbox, CheckCircle, FileWarning, Eye } from 'lucide-react';
+import { Inbox, CheckCircle, FileWarning, Eye, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import StatCard from '../components/dashboard/StatCard';
 
 export default function ReviewerPage() {
@@ -11,6 +11,9 @@ export default function ReviewerPage() {
     const [grants, setGrants] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const GRANTS_PER_PAGE = 5;
 
     useEffect(() => {
         const fetchGrantsForReview = async () => {
@@ -35,6 +38,19 @@ export default function ReviewerPage() {
         return grants.reduce((sum, grant) => sum + grant.pendingReviewCount, 0);
     }, [grants]);
 
+    const filteredGrants = useMemo(() => {
+        return grants.filter(grant =>
+            grant.title.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [grants, searchTerm]);
+
+    const paginatedGrants = useMemo(() => {
+        const startIndex = (currentPage - 1) * GRANTS_PER_PAGE;
+        return filteredGrants.slice(startIndex, startIndex + GRANTS_PER_PAGE);
+    }, [filteredGrants, currentPage]);
+
+    const totalPages = Math.ceil(filteredGrants.length / GRANTS_PER_PAGE);
+
     if (loading) return <div className="dark:text-white">Loading review dashboard...</div>;
     if (error) return <div className="text-red-500">{error}</div>;
 
@@ -43,13 +59,27 @@ export default function ReviewerPage() {
             <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Review Dashboard</h1>
             <p className="text-gray-600 dark:text-gray-300">Grants assigned to you for review are listed below.</p>
             
-            <div className="max-w-xs">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                  <StatCard 
                     icon={<FileWarning />} 
                     title="Total Pending Review" 
                     value={totalPending} 
                     color="yellow" 
                 />
+            </div>
+
+            <div className="relative mb-4">
+                <input
+                    type="text"
+                    placeholder="Search by grant title..."
+                    value={searchTerm}
+                    onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        setCurrentPage(1);
+                    }}
+                    className="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
+                />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
@@ -63,7 +93,7 @@ export default function ReviewerPage() {
                         </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                        {grants.length > 0 ? grants.map(grant => (
+                        {paginatedGrants.length > 0 ? paginatedGrants.map(grant => (
                             <tr key={grant._id}>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{grant.title}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-yellow-600 dark:text-yellow-400">
@@ -98,6 +128,27 @@ export default function ReviewerPage() {
                     </tbody>
                 </table>
             </div>
+
+             {totalPages > 1 && (
+                <div className="flex justify-between items-center mt-4">
+                    <button
+                        onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                        disabled={currentPage === 1}
+                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border rounded-md hover:bg-gray-50 disabled:opacity-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600 inline-flex items-center"
+                    >
+                        <ChevronLeft size={16} className="mr-1" /> Previous
+                    </button>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Page {currentPage} of {totalPages}</span>
+                    <button
+                        onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border rounded-md hover:bg-gray-50 disabled:opacity-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600 inline-flex items-center"
+                    >
+                        Next <ChevronRight size={16} className="ml-1" />
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
+

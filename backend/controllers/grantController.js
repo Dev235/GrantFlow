@@ -179,11 +179,12 @@ const getGrantsForReview = async (req, res) => {
         const grantsWithCounts = await Promise.all(grants.map(async (grant) => {
             const reviewedCount = await Application.countDocuments({
                 grant: grant._id,
+                reviewedBy: req.user._id,
                 status: { $in: ['Waiting for Approval', 'Approved', 'Rejected'] } 
             });
             const pendingReviewCount = await Application.countDocuments({
                 grant: grant._id,
-                status: 'In Review'
+                status: { $in: ['Submitted', 'In Review'] }
             });
             return { ...grant, reviewedCount, pendingReviewCount };
         }));
@@ -205,7 +206,6 @@ const getGrantsForApproval = async (req, res) => {
                 grant: grant._id,
                 status: 'Approved'
             });
-            // Approvers act on applications that have been reviewed but not yet decided
             const pendingApprovalCount = await Application.countDocuments({
                 grant: grant._id,
                 status: 'Waiting for Approval'
@@ -223,7 +223,7 @@ const getReviewCount = async (req, res) => {
     try {
         const grants = await Grant.find({ reviewers: req.user._id, status: 'Active' }).select('_id');
         const grantIds = grants.map(g => g._id);
-        const count = await Application.countDocuments({ grant: { $in: grantIds }, status: 'In Review' });
+        const count = await Application.countDocuments({ grant: { $in: grantIds }, status: { $in: ['Submitted', 'In Review'] } });
         res.json({ count });
     } catch (error) {
         res.status(500).json({ message: 'Server Error' });
@@ -243,3 +243,4 @@ const getApprovalCount = async (req, res) => {
 };
 
 module.exports = { getOpenGrants, getMyGrants, getAllGrants, getGrantById, createGrant, updateGrant, deleteGrant, getGrantsForReview, getGrantsForApproval, getReviewCount, getApprovalCount };
+
