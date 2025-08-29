@@ -14,7 +14,8 @@ const applicationRoutes = require('./routes/applicationRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const auditRoutes = require('./routes/auditRoutes');
-const organizationRoutes = require('./routes/organizationRoutes'); // Import organization routes
+const organizationRoutes = require('./routes/organizationRoutes');
+const notificationRoutes = require('./routes/notificationRoutes'); // Import notification routes
 
 // Load environment variables
 dotenv.config();
@@ -41,6 +42,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/organizations', organizationRoutes); // Mount organization routes
+app.use('/api/notifications', notificationRoutes); // Mount notification routes
 
 // --- Serve Uploaded Files Statically ---
 app.use('/uploads', express.static(path.join(__dirname, '/uploads')));

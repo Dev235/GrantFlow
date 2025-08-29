@@ -232,7 +232,7 @@ export default function OrganizationManagementPage() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-2"><Users /> Organization Management</h1>
-                {isOrgAdmin && (
+                {(isOrgAdmin || isSuperAdmin) && (
                     <button onClick={() => setIsAddModalOpen(true)} className="inline-flex items-center gap-2 px-4 py-2 text-white bg-indigo-600 rounded-lg font-semibold hover:bg-indigo-700">
                         <PlusCircle size={20} /> Add Member
                     </button>
@@ -256,7 +256,7 @@ export default function OrganizationManagementPage() {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Name</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">System Role</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Organization Role</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Actions</th>
+                                {(isOrgAdmin || isSuperAdmin) && <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Actions</th>}
                             </tr>
                         </thead>
                         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -268,14 +268,12 @@ export default function OrganizationManagementPage() {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">{member.role}</td>
                                     <td className="px-6 py-4 whitespace-nowrap">{member.organizationRole}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                                        {(isOrgAdmin || isSuperAdmin) && (
-                                            <>
-                                                <button onClick={() => openEditModal(member)} className="p-2 text-indigo-600 rounded-md hover:bg-indigo-100 dark:hover:bg-indigo-900/50"><Edit size={16}/></button>
-                                                <button onClick={() => openDeleteModal(member)} className="p-2 text-red-500 rounded-md hover:bg-red-100 dark:hover:bg-red-900/50"><Trash2 size={16}/></button>
-                                            </>
-                                        )}
-                                    </td>
+                                    {(isOrgAdmin || isSuperAdmin) && (
+                                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                                            <button onClick={() => openEditModal(member)} className="p-2 text-indigo-600 rounded-md hover:bg-indigo-100 dark:hover:bg-indigo-900/50"><Edit size={16}/></button>
+                                            <button onClick={() => openDeleteModal(member)} className="p-2 text-red-500 rounded-md hover:bg-red-100 dark:hover:bg-red-900/50"><Trash2 size={16}/></button>
+                                        </td>
+                                    )}
                                 </tr>
                             ))}
                         </tbody>

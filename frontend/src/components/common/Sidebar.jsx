@@ -6,8 +6,10 @@ import { useTheme } from '../../context/ThemeContext';
 import { 
     LogOut, LayoutDashboard, FileText, Edit, FolderKanban, Users, History, 
     Building, UserPlus, Sun, Moon, Eye, CheckSquare, ChevronDown, 
-    DollarSign, BookOpen, FileCheck2, Bell
+    DollarSign, BookOpen, FileCheck2
 } from 'lucide-react';
+import NotificationBell from './NotificationBell';
+
 
 const VerificationStatus = ({ status }) => {
     if (status === 'Verified') {
@@ -69,24 +71,6 @@ export default function Sidebar() {
     const { theme, toggleTheme } = useTheme();
     const navigate = useNavigate();
     const [openMenu, setOpenMenu] = useState(null);
-    const [notificationCount, setNotificationCount] = useState(0);
-
-    useEffect(() => {
-        const fetchNotifications = async () => {
-            if (!user || (user.role !== 'Reviewer' && user.role !== 'Approver')) return;
-            const type = user.role.toLowerCase();
-            try {
-                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/grants/${type}/count`, {
-                    headers: { 'Authorization': `Bearer ${user.token}` },
-                });
-                const data = await response.json();
-                setNotificationCount(data.count);
-            } catch (error) {
-                console.error("Failed to fetch notifications", error);
-            }
-        };
-        fetchNotifications();
-    }, [user]);
 
     const handleMenuClick = (menu) => {
         setOpenMenu(openMenu === menu ? null : menu);
@@ -126,12 +110,12 @@ export default function Sidebar() {
     ];
     
     const reviewerLinks = [
-        { name: 'Review Dashboard', path: '/review', icon: <Eye size={18}/>, count: notificationCount },
+        { name: 'Review Dashboard', path: '/review', icon: <Eye size={18}/> },
         { name: 'Organization', path: '/organization', icon: <Building size={18}/> },
     ];
 
     const approverLinks = [
-        { name: 'Approval Dashboard', path: '/approval', icon: <CheckSquare size={18}/>, count: notificationCount },
+        { name: 'Approval Dashboard', path: '/approval', icon: <CheckSquare size={18}/> },
         { name: 'Organization', path: '/organization', icon: <Building size={18}/> },
     ];
     
@@ -208,6 +192,7 @@ export default function Sidebar() {
                     </div>
                 </div>
                 <div className="flex items-center justify-between">
+                    <NotificationBell />
                     <button onClick={toggleTheme} className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700" aria-label="Toggle theme">
                         {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
                     </button>
@@ -219,4 +204,3 @@ export default function Sidebar() {
         </aside>
     );
 }
-

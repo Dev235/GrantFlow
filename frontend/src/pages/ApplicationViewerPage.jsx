@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
-import { Award, X, Download, Flag, CheckCircle, Inbox, Clock, ThumbsUp, ThumbsDown, UserCircle, Calendar, Mail, Save, Eye, ArrowRightCircle } from 'lucide-react';
+import { Award, X, Download, Flag, CheckCircle, Inbox, Clock, ThumbsUp, ThumbsDown, UserCircle, Calendar, Mail, Save, Eye, ArrowRightCircle, RefreshCw } from 'lucide-react';
 import ConfirmationModal from '../components/common/ConfirmationModal';
 
 export default function ApplicationViewerPage() {
@@ -25,7 +25,7 @@ export default function ApplicationViewerPage() {
     const isApprover = user?.role === 'Approver';
     const isGrantMaker = user?.role === 'Grant Maker';
     const isSuperAdmin = user?.role === 'Super Admin';
-    const canUpdateStatus = isSuperAdmin || isApprover;
+    const canUpdateStatus = isSuperAdmin || isApprover || isReviewer;
 
 
     const totalPossiblePoints = useMemo(() => {
@@ -190,6 +190,7 @@ export default function ApplicationViewerPage() {
     const categorizedApps = useMemo(() => ({
         Submitted: applications.filter(app => app.status === 'Submitted'),
         'In Review': applications.filter(app => app.status === 'In Review'),
+        'Waiting for Approval': applications.filter(app => app.status === 'Waiting for Approval'),
         Approved: applications.filter(app => app.status === 'Approved'),
         Rejected: applications.filter(app => app.status === 'Rejected'),
     }), [applications]);
@@ -197,6 +198,7 @@ export default function ApplicationViewerPage() {
     const tabs = [
         { name: 'Submitted', icon: <Inbox size={16} />, status: 'Submitted' },
         { name: 'In Review', icon: <Clock size={16} />, status: 'In Review' },
+        { name: 'Waiting for Approval', icon: <Clock size={16} />, status: 'Waiting for Approval' },
         { name: 'Approved', icon: <ThumbsUp size={16} />, status: 'Approved' },
         { name: 'Rejected', icon: <ThumbsDown size={16} />, status: 'Rejected' },
     ];
@@ -303,13 +305,20 @@ export default function ApplicationViewerPage() {
                                     </div>
                                 </div>
                                 <div className="flex flex-col justify-between gap-2">
-                                    {selectedApp.status === 'Submitted' && isSuperAdmin ? (
+                                    {selectedApp.status === 'In Review' && isReviewer ? (
+                                        <button onClick={() => handleStatusChange(selectedApp, 'Waiting for Approval')} className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700">
+                                            <ArrowRightCircle size={16}/> Send to Approval
+                                        </button>
+                                    ) : selectedApp.status === 'Waiting for Approval' && isApprover ? (
                                         <div className="flex items-center gap-2">
-                                            <button onClick={() => handleStatusChange(selectedApp, 'In Review')} className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
-                                               <ArrowRightCircle size={16}/> Move to Review
+                                            <button onClick={() => handleStatusChange(selectedApp, 'Approved')} className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700">
+                                                <ThumbsUp size={16}/> Approve
                                             </button>
-                                             <button onClick={() => setSelectedApp(null)} className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500">
-                                                Cancel
+                                            <button onClick={() => handleStatusChange(selectedApp, 'Rejected')} className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700">
+                                                <ThumbsDown size={16}/> Decline
+                                            </button>
+                                            <button onClick={() => handleStatusChange(selectedApp, 'In Review')} className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-white bg-yellow-500 rounded-md hover:bg-yellow-600">
+                                                <RefreshCw size={16}/> Re-evaluate
                                             </button>
                                         </div>
                                     ) : (
@@ -321,8 +330,9 @@ export default function ApplicationViewerPage() {
                                                 className="w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700"
                                                 disabled={!canUpdateStatus}
                                             >
-                                                <option disabled={selectedApp.status !== 'Submitted'}>Submitted</option>
+                                                <option>Submitted</option>
                                                 <option>In Review</option>
+                                                <option>Waiting for Approval</option>
                                                 <option>Approved</option>
                                                 <option>Rejected</option>
                                             </select>
