@@ -3,6 +3,7 @@ const User = require('../models/userModel');
 const { logAction } = require('../utils/auditLogger');
 const generateToken = require('../utils/generateToken');
 
+
 // ... (getUserProfile, updateUserProfile, getAllUsers, createUser, deleteUser, verifyUser functions remain the same) ...
 const getUserProfile = async (req, res) => {
     try {
@@ -164,5 +165,25 @@ const resetUserPassword = async (req, res) => {
     }
 };
 
+const getAssignableUsers = async (req, res) => {
+    try {
+        // For now, any Grant Maker or Super Admin can be assigned
+        const users = await User.find({ role: { $in: ['Grant Maker', 'Super Admin'] } }).select('name email role');
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
 
-module.exports = { getUserProfile, updateUserProfile, getAllUsers, createUser, deleteUser, verifyUser, resetUserPassword };
+
+// (existing exports)
+module.exports = { 
+    getUserProfile, 
+    updateUserProfile, 
+    getAllUsers, 
+    createUser, 
+    deleteUser, 
+    verifyUser, 
+    resetUserPassword,
+    getAssignableUsers // <-- Export new function
+};

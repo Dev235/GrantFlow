@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { PlusCircle, Trash2, Award } from 'lucide-react';
+import { PlusCircle, Trash2, Award, Users, UserCheck } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function EditGrantPage() {
@@ -10,29 +10,47 @@ export default function EditGrantPage() {
     const { user } = useAuth();
     const navigate = useNavigate();
     const [grant, setGrant] = useState(null);
+    const [assignableUsers, setAssignableUsers] = useState([]);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [pageLoading, setPageLoading] = useState(true);
 
     useEffect(() => {
-        const fetchGrant = async () => {
+        const fetchGrantAndUsers = async () => {
+            if (!user?.token) return;
             try {
-                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/grants/${grantId}`);
-                if (!response.ok) throw new Error('Could not fetch grant details.');
-                const data = await response.json();
-                // Format the deadline for the date input field
-                if (data.deadline) {
-                    data.deadline = format(new Date(data.deadline), 'yyyy-MM-dd');
+                // Fetch grant details
+                const grantResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/grants/${grantId}`, {
+                    headers: { 'Authorization': `Bearer ${user.token}` }
+                });
+                if (!grantResponse.ok) throw new Error('Could not fetch grant details.');
+                const grantData = await grantResponse.json();
+                if (grantData.deadline) {
+                    grantData.deadline = format(new Date(grantData.deadline), 'yyyy-MM-dd');
                 }
-                setGrant(data);
+                setGrant(grantData);
+
+                // Fetch assignable users
+                const usersResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/assignable`, {
+                    headers: { 'Authorization': `Bearer ${user.token}` }
+                });
+                if (!usersResponse.ok) throw new Error('Could not fetch users.');
+                const usersData = await usersResponse.json();
+                setAssignableUsers(usersData);
+
             } catch (err) {
                 setError(err.message);
             } finally {
                 setPageLoading(false);
             }
         };
-        fetchGrant();
-    }, [grantId]);
+        if(user) fetchGrantAndUsers();
+    }, [grantId, user]);
+
+    const handleMultiSelectChange = (e, field) => {
+        const selectedIds = Array.from(e.target.selectedOptions, option => option.value);
+        setGrant(prev => ({ ...prev, [field]: selectedIds }));
+    };
 
     const handleGrantChange = (e) => {
         const { name, value } = e.target;
@@ -61,7 +79,7 @@ export default function EditGrantPage() {
         setError('');
         try {
             const token = user?.token;
-            if (!token) throw new Error("Authentication error. Please log in again.");
+            if (!token) throw new Error("Authentication error.");
 
             const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/grants/${grantId}`, {
                 method: 'PUT',
@@ -81,6 +99,7 @@ export default function EditGrantPage() {
         }
     };
 
+
     if (pageLoading) return <div>Loading grant data...</div>;
     if (error && !grant) return <div className="text-red-500">{error}</div>;
 
@@ -95,24 +114,50 @@ export default function EditGrantPage() {
                         <h2 className="text-xl font-semibold text-gray-700 border-b pb-2">Grant Details</h2>
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Grant Title</label>
-                            <input type="text" name="title" value={grant.title} onChange={handleGrantChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required />
+                            <input type="text" name="title" value={grant.title} onChange={handleGrantChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Description</label>
-                            <textarea name="description" value={grant.description} onChange={handleGrantChange} rows="4" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required></textarea>
+                            <textarea name="description" value={grant.description} onChange={handleGrantChange} rows="4" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required></textarea>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Amount (MYR)</label>
-                                <input type="number" name="amount" value={grant.amount} onChange={handleGrantChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required />
+                                <input type="number" name="amount" value={grant.amount} onChange={handleGrantChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Category</label>
-                                <input type="text" name="category" value={grant.category} onChange={handleGrantChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="e.g., Pendidikan, Kesenian" required />
+                                <input type="text" name="category" value={grant.category} onChange={handleGrantChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="e.g., Education, Arts" required />
+                            </div>
+                             <div>
+                                <label className="block text-sm font-medium text-gray-700">Application Deadline</label>
+                                <input type="date" name="deadline" value={grant.deadline} onChange={handleGrantChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Application Deadline</label>
-                                <input type="date" name="deadline" value={grant.deadline} onChange={handleGrantChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required />
+                                <label className="block text-sm font-medium text-gray-700">Status</label>
+                                <select name="status" value={grant.status} onChange={handleGrantChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-white">
+                                    <option value="Draft">Draft</option>
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                     <div className="space-y-4">
+                        <h2 className="text-xl font-semibold text-gray-700 border-b pb-2">Workflow Assignments</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700"><Users size={16}/> Assign Reviewers</label>
+                                <select multiple value={grant.reviewers} onChange={(e) => handleMultiSelectChange(e, 'reviewers')} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm h-32">
+                                    {assignableUsers.map(u => <option key={u._id} value={u._id}>{u.name} ({u.email})</option>)}
+                                </select>
+                            </div>
+                             <div>
+                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700"><UserCheck size={16}/> Assign Approvers</label>
+                                <select multiple value={grant.approvers} onChange={(e) => handleMultiSelectChange(e, 'approvers')} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm h-32">
+                                    {assignableUsers.map(u => <option key={u._id} value={u._id}>{u.name} ({u.email})</option>)}
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -142,14 +187,7 @@ export default function EditGrantPage() {
                                     </div>
                                     <div className="relative">
                                         <Award className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                                        <input 
-                                          type="number" 
-                                          name="points" 
-                                          value={q.points} 
-                                          onChange={(e) => handleQuestionChange(index, e)} 
-                                          className="pl-9 pr-2 py-2 mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                                          min="0"
-                                        />
+                                        <input type="number" name="points" value={q.points} onChange={(e) => handleQuestionChange(index, e)} className="pl-9 pr-2 py-2 mt-1 block w-full rounded-md border-gray-300 shadow-sm" min="0"/>
                                     </div>
                                 </div>
                             </div>

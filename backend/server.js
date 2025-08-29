@@ -2,7 +2,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
-const path = require('path'); // Import path module
+const path = require('path');
 const connectDB = require('./config/db');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 
@@ -10,12 +10,11 @@ const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const grantRoutes = require('./routes/grantRoutes');
-const chatbotRoutes = require('./routes/chatbotRoutes');
 const applicationRoutes = require('./routes/applicationRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
-const uploadRoutes = require('./routes/uploadRoutes'); // Import upload routes
+const uploadRoutes = require('./routes/uploadRoutes');
 const auditRoutes = require('./routes/auditRoutes');
-
+const organizationRoutes = require('./routes/organizationRoutes'); // Import organization routes
 
 // Load environment variables
 dotenv.config();
@@ -37,16 +36,13 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/grants', grantRoutes);
-app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/upload', uploadRoutes); // Mount upload routes
+app.use('/api/upload', uploadRoutes);
 app.use('/api/audit', auditRoutes);
-
+app.use('/api/organizations', organizationRoutes); // Mount organization routes
 
 // --- Serve Uploaded Files Statically ---
-// This makes the 'uploads' folder accessible via HTTP requests
-// e.g., http://localhost:5000/uploads/filename.jpg
 app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
 
 

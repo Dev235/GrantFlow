@@ -1,6 +1,7 @@
+// frontend/src/components/dashboard/GrantMakerDashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { FileText, DollarSign, Users, CheckSquare } from 'lucide-react';
+import { FileText, DollarSign, CheckSquare, Edit, XCircle } from 'lucide-react';
 import StatCard from './StatCard';
 import { useAuth } from '../../context/AuthContext';
 
@@ -36,10 +37,33 @@ export default function GrantMakerDashboard() {
     return (
         <div className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard icon={<FileText />} title="Active Grants" value={stats.activeGrants} color="indigo" />
-                <StatCard icon={<Users />} title="Total Applications" value={stats.totalApplications} color="teal" />
-                <StatCard icon={<CheckSquare />} title="Approved Applications" value={stats.approvedApplications} color="green" />
-                <StatCard icon={<DollarSign />} title="Total Awarded" value={`RM ${stats.totalAwarded.toLocaleString()}`} color="pink" />
+                <StatCard 
+                    icon={<Edit />} 
+                    title="Draft Grants" 
+                    value={stats.draftGrants} 
+                    color="yellow" 
+                    linkTo="/manage/grants?status=Draft" 
+                />
+                <StatCard 
+                    icon={<FileText />} 
+                    title="Active Grants" 
+                    value={stats.activeGrants} 
+                    color="indigo" 
+                    linkTo="/manage/grants?status=Active" 
+                />
+                <StatCard 
+                    icon={<XCircle />} 
+                    title="Inactive Grants" 
+                    value={stats.inactiveGrants} 
+                    color="gray" 
+                    linkTo="/manage/grants?status=Inactive" 
+                />
+                <StatCard 
+                    icon={<DollarSign />} 
+                    title="Total Awarded" 
+                    value={`RM ${stats.totalAwarded.toLocaleString()}`} 
+                    color="pink" 
+                />
             </div>
             <div className="bg-white p-6 rounded-xl shadow-md">
                 <h3 className="font-semibold text-lg mb-4 text-gray-700">Applications by Category</h3>

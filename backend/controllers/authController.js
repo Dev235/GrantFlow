@@ -1,33 +1,62 @@
-// controllers/authController.js
-// Handles logic for user registration and login
-
+// backend/controllers/authController.js
 const User = require('../models/userModel');
+const Organization = require('../models/organizationModel');
+const JoinRequest = require('../models/joinRequestModel'); // Import JoinRequest model
 const generateToken = require('../utils/generateToken');
 const { logAction } = require('../utils/auditLogger');
 
-
-/**
- * @desc    Register a new user
- * @route   POST /api/auth/register
- * @access  Public
- */
 const registerUser = async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password, role, organizationId, newOrganizationName } = req.body;
 
   try {
     const userExists = await User.findOne({ email });
-
     if (userExists) {
       res.status(400);
       throw new Error('User already exists');
     }
 
+    let organization = null;
+    let orgRole = null;
+    let joinStatus = 'None'; // Default for Applicants
+
     const user = await User.create({
       name,
       email,
-      password, // Password will be hashed by the pre-save middleware
+      password,
       role,
+      joinRequestStatus: joinStatus,
     });
+
+    if (role === 'Grant Maker') {
+        if (newOrganizationName) {
+            const orgExists = await Organization.findOne({ name: newOrganizationName });
+            if (orgExists) {
+                throw new Error('An organization with this name already exists.');
+            }
+            organization = new Organization({ 
+                name: newOrganizationName,
+                admins: [user._id],
+                members: [user._id]
+            });
+            await organization.save();
+            
+            user.organization = organization._id;
+            user.organizationRole = 'Admin';
+
+        } else if (organizationId) {
+            organization = await Organization.findById(organizationId);
+            if (!organization) throw new Error('Selected organization not found.');
+            
+            // Create a join request instead of adding directly
+            await JoinRequest.create({ user: user._id, organization: organizationId });
+            user.joinRequestStatus = 'Pending';
+
+        } else {
+            throw new Error('Grant Makers must create or join an organization.');
+        }
+    }
+    
+    await user.save();
 
     if (user) {
       await logAction(user, 'USER_REGISTER', { email: user.email, role: user.role });
@@ -36,7 +65,10 @@ const registerUser = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        organization: user.organization,
+        organizationRole: user.organizationRole,
         verificationStatus: user.verificationStatus,
+        joinRequestStatus: user.joinRequestStatus,
         profile: user.profile,
         token: generateToken(user._id),
       });
@@ -49,16 +81,16 @@ const registerUser = async (req, res) => {
   }
 };
 
-/**
- * @desc    Auth user & get token (Login)
- * @route   POST /api/auth/login
- * @access  Public
- */
 const loginUser = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, role } = req.body;
 
   try {
-    const user = await User.findOne({ email });
+    const query = { email };
+    if (role) {
+        query.role = role;
+    }
+
+    const user = await User.findOne(query);
 
     if (user && (await user.matchPassword(password))) {
       await logAction(user, 'USER_LOGIN', { email: user.email });
@@ -67,24 +99,21 @@ const loginUser = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        organization: user.organization,
+        organizationRole: user.organizationRole,
         verificationStatus: user.verificationStatus,
+        joinRequestStatus: user.joinRequestStatus,
         profile: user.profile,
         token: generateToken(user._id),
       });
     } else {
-      res.status(401); // Unauthorized
-      throw new Error('Invalid email or password');
+      res.status(401).json({ message: 'Invalid credentials for the selected role.' });
     }
   } catch (error) {
      res.status(res.statusCode || 500).json({ message: error.message });
   }
 };
 
-/**
- * @desc    Log user out
- * @route   POST /api/auth/logout
- * @access  Private
- */
 const logoutUser = async (req, res) => {
     try {
         await logAction(req.user, 'USER_LOGOUT', { email: req.user.email });
@@ -93,5 +122,6 @@ const logoutUser = async (req, res) => {
         res.status(500).json({ message: 'Server error during logout' });
     }
 };
+
 
 module.exports = { registerUser, loginUser, logoutUser };

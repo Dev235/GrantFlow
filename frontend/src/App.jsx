@@ -20,7 +20,10 @@ import GrantDetailsPage from './pages/GrantDetailsPage';
 import ApplicationViewerPage from './pages/ApplicationViewerPage';
 import UserManagementPage from './pages/UserManagementPage';
 import AuditLogPage from './pages/AuditLogPage';
-import ProfilePage from './pages/ProfilePage'; // Import ProfilePage
+import ProfilePage from './pages/ProfilePage';
+import OrganizationManagementPage from './pages/OrganizationManagementPage'; // Import new page
+import JoinOrganizationPage from './pages/JoinOrganizationPage';
+import ManageJoinRequestsPage from './pages/ManageJoinRequestsPage';
 
 
 // Component Imports
@@ -75,6 +78,10 @@ const AppContent = () => {
                     <Route path="/manage/grants" element={<ProtectedRoute roles={['Grant Maker', 'Super Admin']}><ManageGrantsPage /></ProtectedRoute>} />
                     <Route path="/manage/grants/edit/:id" element={<ProtectedRoute roles={['Grant Maker']}><EditGrantPage /></ProtectedRoute>} />
                     <Route path="/manage/applications/:grantId" element={<ProtectedRoute roles={['Grant Maker', 'Super Admin']}><ApplicationViewerPage /></ProtectedRoute>} />
+                    <Route path="/organization" element={<ProtectedRoute roles={['Grant Maker', 'Super Admin']}><OrganizationManagementPage /></ProtectedRoute>} />
+                    <Route path="/organization/join" element={<ProtectedRoute roles={['Grant Maker']}><JoinOrganizationPage /></ProtectedRoute>} />
+                    <Route path="/organization/requests" element={<ProtectedRoute roles={['Grant Maker']}><ManageJoinRequestsPage /></ProtectedRoute>} />
+
 
                     {/* Super Admin Routes */}
                     <Route path="/admin/users" element={<ProtectedRoute roles={['Super Admin']}><UserManagementPage /></ProtectedRoute>} />

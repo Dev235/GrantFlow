@@ -8,7 +8,8 @@ const {
     createUser, 
     deleteUser,
     verifyUser,
-    resetUserPassword // <-- Import new function
+    resetUserPassword,
+    getAssignableUsers // <-- Import new function
 } = require('../controllers/userControllers');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
@@ -16,6 +17,11 @@ const { protect, authorize } = require('../middleware/authMiddleware');
 router.route('/profile')
     .get(protect, getUserProfile)
     .put(protect, updateUserProfile);
+
+// --- NEW ROUTE ---
+// Route to get users who can be assigned to grants
+router.route('/assignable')
+    .get(protect, authorize('Grant Maker', 'Super Admin'), getAssignableUsers);
 
 // Routes for admin-level user management
 router.route('/')
@@ -28,7 +34,6 @@ router.route('/:id')
 router.route('/:id/verify')
     .put(protect, authorize('Super Admin'), verifyUser);
 
-// --- NEW ROUTE ---
 router.route('/:id/reset-password')
     .put(protect, authorize('Super Admin'), resetUserPassword);
 

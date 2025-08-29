@@ -1,3 +1,4 @@
+// frontend/src/pages/LoginPage.jsx
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -5,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [role, setRole] = useState('Applicant'); // Default login role
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const { login } = useAuth();
@@ -15,11 +17,10 @@ export default function LoginPage() {
         setLoading(true);
         setError('');
         try {
-            // The backend is expected to be running on localhost:5000
             const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ email, password, role }),
             });
             const data = await response.json();
             if (!response.ok) {
@@ -48,7 +49,7 @@ export default function LoginPage() {
                             value={email} 
                             onChange={(e) => setEmail(e.target.value)} 
                             required 
-                            className="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-4 py-2 mt-2 border rounded-lg"
                             placeholder="you@example.com"
                         />
                     </div>
@@ -59,11 +60,21 @@ export default function LoginPage() {
                             value={password} 
                             onChange={(e) => setPassword(e.target.value)} 
                             required 
-                            className="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-4 py-2 mt-2 border rounded-lg"
                             placeholder="••••••••"
                         />
                     </div>
-                    <button type="submit" disabled={loading} className="w-full py-3 font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-300">
+                    <div>
+                        <label className="text-sm font-medium text-gray-700">Login as</label>
+                        <select value={role} onChange={(e) => setRole(e.target.value)} className="w-full px-4 py-2 mt-2 bg-white border rounded-lg">
+                            <option value="Applicant">Applicant</option>
+                            <option value="Grant Maker">Grant Maker</option>
+                            <option value="Reviewer">Reviewer</option>
+                            <option value="Approver">Approver</option>
+                            <option value="Super Admin">Super Admin</option>
+                        </select>
+                    </div>
+                    <button type="submit" disabled={loading} className="w-full py-3 font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:bg-indigo-300">
                         {loading ? 'Signing In...' : 'Sign In'}
                     </button>
                 </form>

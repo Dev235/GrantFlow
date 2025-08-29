@@ -18,7 +18,6 @@ const questionSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
-  // NEW: Add a points field for scoring
   points: {
     type: Number,
     required: true,
@@ -57,11 +56,24 @@ const grantSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['Open', 'Closed', 'Awarded'],
-      default: 'Open',
+      enum: ['Draft', 'Active', 'Inactive'],
+      default: 'Draft',
     },
-    // The application form is a dynamic array of questions
+    phase: {
+      type: String,
+      enum: ['Application', 'Disbursement', 'Reporting'],
+      default: 'Application',
+    },
     applicationQuestions: [questionSchema],
+    // NEW: Fields to assign reviewers and approvers
+    reviewers: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }],
+    approvers: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }],
   },
   {
     timestamps: true, // Adds createdAt and updatedAt timestamps

@@ -3,71 +3,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
-import { Award, X, Download, Flag, CheckCircle, Inbox, Clock, ThumbsUp, ThumbsDown, UserCircle, Calendar, Mail, ArrowRightCircle } from 'lucide-react';
+import { Award, X, Download, Flag, CheckCircle, Inbox, Clock, ThumbsUp, ThumbsDown, UserCircle, Calendar, Mail, Save, Eye } from 'lucide-react';
 import ConfirmationModal from '../components/common/ConfirmationModal';
-
-// A dedicated component for rendering each application as a card
-const ApplicationCard = ({ app, totalPossiblePoints, onStatusChange, onFlagSet, onSelectApp, flagColorClass, currentFlag }) => {
-    return (
-        <div className="bg-white rounded-lg shadow-md border border-gray-200 flex flex-col hover:shadow-lg transition-shadow duration-300">
-            <div className="p-4 border-b">
-                <h3 className="font-bold text-gray-800">{app.applicant.name}</h3>
-                <p className="text-sm text-gray-500">{app.applicant.email}</p>
-            </div>
-            <div className="p-4 flex-grow space-y-3">
-                <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-500">Submitted:</span>
-                    <span className="font-medium text-gray-700">{format(new Date(app.createdAt), 'dd MMM yyyy')}</span>
-                </div>
-                <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-500 flex items-center gap-1"><Award size={16} className="text-yellow-500" /> Score:</span>
-                    <span className="font-bold text-lg text-indigo-600">{app.score} / {totalPossiblePoints}</span>
-                </div>
-                {app.status === 'In Review' && (
-                    <div className="flex justify-between items-center text-sm">
-                        <span className="text-gray-500 flex items-center gap-1"><Flag size={16} className={flagColorClass} /> Flag:</span>
-                         <select
-                            value={currentFlag || 'none'}
-                            onChange={(e) => onFlagSet(app._id, e.target.value === 'none' ? null : e.target.value)}
-                            className={`text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-1 font-medium ${
-                                currentFlag === 'green' ? 'bg-green-100 text-green-800' :
-                                currentFlag === 'orange' ? 'bg-orange-100 text-orange-800' :
-                                currentFlag === 'red' ? 'bg-red-100 text-red-800' : 'bg-white text-gray-800'
-                            }`}
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <option value="none">No Flag</option>
-                            <option value="green">Green</option>
-                            <option value="orange">Orange</option>
-                            <option value="red">Red</option>
-                        </select>
-                    </div>
-                )}
-            </div>
-            <div className="p-4 bg-gray-50 border-t flex justify-end gap-2">
-                <button onClick={() => onSelectApp(app)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border rounded-md hover:bg-gray-100">
-                    View Details
-                </button>
-                {app.status === 'Submitted' && (
-                     <button onClick={() => onStatusChange(app, 'In Review')} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 inline-flex items-center gap-2">
-                        Move to Review <ArrowRightCircle size={16}/>
-                    </button>
-                )}
-                {app.status === 'In Review' && (
-                    <>
-                        <button onClick={() => onStatusChange(app, 'Rejected')} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700">
-                            Reject
-                        </button>
-                        <button onClick={() => onStatusChange(app, 'Approved')} className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700">
-                            Approve
-                        </button>
-                    </>
-                )}
-            </div>
-        </div>
-    );
-};
-
 
 export default function ApplicationViewerPage() {
     const { grantId } = useParams();
@@ -81,34 +18,72 @@ export default function ApplicationViewerPage() {
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [appToProcess, setAppToProcess] = useState(null);
     
+    const [answers, setAnswers] = useState([]);
+    const [totalScore, setTotalScore] = useState(0);
+
     const totalPossiblePoints = useMemo(() => {
         if (!grant) return 0;
         return grant.applicationQuestions.reduce((total, q) => total + (q.points || 0), 0);
     }, [grant]);
 
-    useEffect(() => {
-        const fetchApplications = async () => {
-            if (!user?.token) return;
-            try {
-                const grantRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/grants/${grantId}`);
-                if (!grantRes.ok) throw new Error('Could not fetch grant details.');
-                const grantData = await grantRes.json();
-                setGrant(grantData);
+    const fetchApplications = async () => {
+        if (!user?.token) return;
+        setLoading(true);
+        try {
+            const grantRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/grants/${grantId}`);
+            if (!grantRes.ok) throw new Error('Could not fetch grant details.');
+            const grantData = await grantRes.json();
+            setGrant(grantData);
 
-                const appRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/applications/grant/${grantId}`, {
-                    headers: { 'Authorization': `Bearer ${user.token}` },
-                });
-                if (!appRes.ok) throw new Error('Could not fetch applications.');
-                const appData = await appRes.json();
-                setApplications(appData);
-            } catch (err) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
-        };
+            const appRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/applications/grant/${grantId}`, {
+                headers: { 'Authorization': `Bearer ${user.token}` },
+            });
+            if (!appRes.ok) throw new Error('Could not fetch applications.');
+            const appData = await appRes.json();
+            setApplications(appData);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchApplications();
     }, [grantId, user]);
+
+    useEffect(() => {
+        if (selectedApp) {
+            setAnswers([...selectedApp.answers]);
+        }
+    }, [selectedApp]);
+
+    useEffect(() => {
+        const newTotal = answers.reduce((sum, answer) => sum + (Number(answer.reviewerScore) || 0), 0);
+        setTotalScore(newTotal);
+    }, [answers]);
+
+    const handleAnswerFieldChange = (answerId, field, value) => {
+        setAnswers(prev => prev.map(a => a._id === answerId ? { ...a, [field]: value } : a));
+    };
+
+    const handleSaveScores = async () => {
+        try {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/applications/${selectedApp._id}/score`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${user.token}`,
+                },
+                body: JSON.stringify({ answers }),
+            });
+            if (!response.ok) throw new Error('Failed to save scores.');
+            alert("Scores and comments saved!");
+            window.location.reload(); // Refresh page as requested
+        } catch (err) {
+            setError(err.message);
+        }
+    };
     
     const handleStatusChange = (app, newStatus) => {
         setAppToProcess({ app, newStatus });
@@ -131,13 +106,7 @@ export default function ApplicationViewerPage() {
                 body: JSON.stringify({ status: newStatus }),
             });
             if (!response.ok) throw new Error('Failed to update status.');
-            
-            setApplications(apps => apps.map(app => 
-                app._id === appId ? { ...app, status: newStatus } : app
-            ));
-            if (selectedApp && selectedApp._id === appId) {
-                setSelectedApp(prev => ({ ...prev, status: newStatus }));
-            }
+            window.location.reload(); // Refresh page as requested
         } catch (err) {
             setError(err.message);
         } finally {
@@ -157,11 +126,7 @@ export default function ApplicationViewerPage() {
                 body: JSON.stringify({ flag: color }),
             });
             if (!response.ok) throw new Error('Failed to update flag.');
-            const updatedApp = await response.json();
-            
-            setApplications(apps => apps.map(app => 
-                app._id === appId ? { ...app, flag: updatedApp.flag } : app
-            ));
+            fetchApplications(); // Re-fetch to show updated data
         } catch (err) {
             setError(err.message);
         }
@@ -240,25 +205,63 @@ export default function ApplicationViewerPage() {
                 ))}
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {categorizedApps[activeTab].length > 0 ? (
-                    categorizedApps[activeTab].map(app => (
-                        <ApplicationCard
-                            key={app._id}
-                            app={app}
-                            totalPossiblePoints={totalPossiblePoints}
-                            onStatusChange={handleStatusChange}
-                            onFlagSet={handleFlagSet}
-                            onSelectApp={setSelectedApp}
-                            flagColorClass={getFlagColorClass(app.flag)}
-                            currentFlag={app.flag || null}
-                        />
-                    ))
-                ) : (
-                    <div className="col-span-full text-center py-12 bg-white rounded-lg shadow-sm border">
-                        <p className="text-gray-500">No applications in the "{activeTab}" category.</p>
-                    </div>
-                )}
+            <div className="bg-white rounded-xl shadow-md overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                        <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Applicant</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Flag</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                        {categorizedApps[activeTab].length > 0 ? (
+                            categorizedApps[activeTab].map(app => (
+                                <tr key={app._id} className="hover:bg-gray-50">
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="text-sm font-medium text-gray-900">{app.applicant.name}</div>
+                                        <div className="text-sm text-gray-500">{app.applicant.email}</div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {format(new Date(app.createdAt), 'dd MMM yyyy')}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-indigo-600">
+                                        {app.score} / {totalPossiblePoints}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <select
+                                            value={app.flag || 'none'}
+                                            onChange={(e) => handleFlagSet(app._id, e.target.value === 'none' ? null : e.target.value)}
+                                            className={`text-sm border-gray-300 rounded-md shadow-sm p-1 font-medium ${
+                                                app.flag === 'green' ? 'bg-green-100 text-green-800' :
+                                                app.flag === 'orange' ? 'bg-orange-100 text-orange-800' :
+                                                app.flag === 'red' ? 'bg-red-100 text-red-800' : 'bg-white text-gray-800'
+                                            }`}
+                                        >
+                                            <option value="none">No Flag</option>
+                                            <option value="green">Green</option>
+                                            <option value="orange">Orange</option>
+                                            <option value="red">Red</option>
+                                        </select>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <button onClick={() => setSelectedApp(app)} className="px-3 py-1 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 inline-flex items-center gap-2">
+                                            <Eye size={14}/> View & Score
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="5" className="text-center py-12 text-gray-500">
+                                    No applications in the "{activeTab}" category.
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
             </div>
 
             {selectedApp && (
@@ -286,7 +289,7 @@ export default function ApplicationViewerPage() {
                                         <select 
                                             value={selectedApp.status} 
                                             onChange={(e) => handleStatusChange(selectedApp, e.target.value)}
-                                            className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                            className="w-full rounded-md border-gray-300 shadow-sm"
                                         >
                                             <option>Submitted</option>
                                             <option>In Review</option>
@@ -296,44 +299,59 @@ export default function ApplicationViewerPage() {
                                     </div>
                                     <div className="text-lg font-semibold text-gray-800 flex items-center justify-between gap-2 bg-indigo-50 p-2 rounded-md">
                                         <span className="flex items-center gap-2"><Award className="text-indigo-500" /> Total Score:</span>
-                                        <span className="text-2xl font-bold text-indigo-600">{selectedApp.score} / {totalPossiblePoints}</span>
+                                        <span className="text-2xl font-bold text-indigo-600">{totalScore} / {totalPossiblePoints}</span>
                                     </div>
                                 </div>
                             </div>
                             
                             <div>
-                                <h4 className="font-semibold mb-2 text-gray-700">Application Answers</h4>
+                                <h4 className="font-semibold mb-2 text-gray-700">Application Answers & Scoring</h4>
                                 <ul className="space-y-4">
-                                    {selectedApp.answers.map(answer => (
-                                        <li key={answer._id} className="bg-white p-4 rounded-lg shadow-sm border">
-                                            <p className="font-bold text-gray-800">{answer.questionText}</p>
-                                            <div className="mt-2 border-t pt-2">{renderAnswer(answer)}</div>
-                                        </li>
-                                    ))}
+                                    {answers.map(answer => {
+                                        const question = grant.applicationQuestions.find(q => q._id === answer.questionId);
+                                        const maxPoints = question ? question.points : 0;
+                                        return (
+                                            <li key={answer._id} className="bg-white p-4 rounded-lg shadow-sm border">
+                                                <p className="font-bold text-gray-800">{answer.questionText}</p>
+                                                <div className="mt-2 border-t pt-2">{renderAnswer(answer)}</div>
+                                                <div className="mt-4 pt-4 border-t border-dashed">
+                                                    <h5 className="text-sm font-semibold text-gray-600 mb-2">Reviewer's Feedback</h5>
+                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                        <div className="md:col-span-2">
+                                                            <textarea 
+                                                                placeholder="Add comments..." 
+                                                                value={answer.reviewerComments || ''}
+                                                                onChange={(e) => handleAnswerFieldChange(answer._id, 'reviewerComments', e.target.value)}
+                                                                className="w-full rounded-md border-gray-300"
+                                                                rows="2"
+                                                            />
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <input 
+                                                                type="number" 
+                                                                value={answer.reviewerScore || ''}
+                                                                onChange={(e) => handleAnswerFieldChange(answer._id, 'reviewerScore', e.target.value)}
+                                                                max={maxPoints}
+                                                                min="0"
+                                                                className="w-full text-right border-gray-300 rounded-md"
+                                                            />
+                                                            <span className="text-gray-500">/ {maxPoints} pts</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </li>
+                                        );
+                                    })}
                                 </ul>
                             </div>
                         </div>
-                        <div className="p-4 border-t bg-gray-100 rounded-b-xl flex justify-end gap-3">
+                        <div className="p-4 border-t bg-gray-100 rounded-b-xl flex justify-between items-center">
                             <button onClick={() => setSelectedApp(null)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border rounded-md hover:bg-gray-100">
                                 Close
                             </button>
-                             {selectedApp.status === 'Submitted' && (
-                                <button onClick={() => handleStatusChange(selectedApp, 'In Review')} className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
-                                    Move to Review
-                                </button>
-                            )}
-                            {selectedApp.status === 'In Review' && (
-                                <>
-                                <button onClick={() => handleStatusChange(selectedApp, 'Rejected')} className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700">
-                                    <ThumbsDown size={16} />
-                                    Reject
-                                </button>
-                                <button onClick={() => handleStatusChange(selectedApp, 'Approved')} className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700">
-                                    <CheckCircle size={16} />
-                                    Approve
-                                </button>
-                                </>
-                            )}
+                             <button onClick={handleSaveScores} className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">
+                                <Save size={16} /> Save Scores & Comments
+                            </button>
                         </div>
                     </div>
                 </div>
