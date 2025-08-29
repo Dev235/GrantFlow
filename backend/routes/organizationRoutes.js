@@ -3,7 +3,8 @@ const express = require('express');
 const router = express.Router();
 const { 
     getOrganizations, 
-    getOrganizationMembers, 
+    getOrganizationMembers,
+    createOrganization, // Add new function to destructuring
     updateOrganizationMember, 
     removeOrganizationMember,
     requestToJoinOrganization,
@@ -16,6 +17,9 @@ const { protect, authorize } = require('../middleware/authMiddleware');
 
 // @route   GET /api/organizations
 router.get('/', getOrganizations);
+
+// @route   POST /api/organizations/create (NEW ROUTE)
+router.post('/create', protect, authorize('Grant Maker'), createOrganization);
 
 // @route   POST /api/organizations/join
 router.post('/join', protect, authorize('Grant Maker'), requestToJoinOrganization);

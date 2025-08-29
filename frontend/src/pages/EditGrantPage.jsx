@@ -1,8 +1,8 @@
 // frontend/src/pages/EditGrantPage.jsx
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { PlusCircle, Trash2, Award, Users, UserCheck } from 'lucide-react';
+import { PlusCircle, Trash2, Award, Users, UserCheck, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 
 const UserAssigner = ({ users, selectedUsers, onChange, title, icon }) => {
@@ -44,9 +44,13 @@ export default function EditGrantPage() {
     const [loading, setLoading] = useState(false);
     const [pageLoading, setPageLoading] = useState(true);
 
+    const isGrantMaker = user?.role === 'Grant Maker';
+    const isAffiliatedGrantMaker = isGrantMaker && user?.organization;
+
+
     useEffect(() => {
         const fetchGrantAndUsers = async () => {
-            if (!user?.token) return;
+            if (!user?.token || (isGrantMaker && !isAffiliatedGrantMaker)) return;
             try {
                 const grantResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/grants/${grantId}`, {
                     headers: { 'Authorization': `Bearer ${user.token}` }
@@ -72,7 +76,7 @@ export default function EditGrantPage() {
             }
         };
         if(user) fetchGrantAndUsers();
-    }, [grantId, user]);
+    }, [grantId, user, isGrantMaker, isAffiliatedGrantMaker]);
 
     const handleGrantChange = (e) => {
         const { name, value } = e.target;
@@ -120,6 +124,24 @@ export default function EditGrantPage() {
             setLoading(false);
         }
     };
+
+    if (isGrantMaker && !isAffiliatedGrantMaker) {
+         return (
+            <div className="text-center py-20 bg-white dark:bg-gray-800 rounded-xl shadow-md">
+                <AlertCircle className="mx-auto text-red-500" size={48} />
+                <h2 className="mt-4 text-2xl font-bold text-gray-800 dark:text-white">Join an Organization First</h2>
+                <p className="mt-2 text-gray-600 dark:text-gray-300">As a Grant Maker, you must be part of an organization to create grants. Please join an existing one or create a new one.</p>
+                <div className="mt-6 flex flex-col sm:flex-row justify-center gap-4">
+                    <Link to="/organization/join" className="px-6 py-2 text-white bg-indigo-600 rounded-lg font-semibold hover:bg-indigo-700">
+                        Join an Organization
+                    </Link>
+                     <Link to="/organization/create" className="px-6 py-2 text-indigo-600 border-2 border-indigo-600 rounded-lg font-semibold hover:bg-indigo-50">
+                        Create a New Organization
+                    </Link>
+                </div>
+            </div>
+        );
+    }
 
 
     if (pageLoading) return <div>Loading grant data...</div>;
@@ -229,4 +251,3 @@ export default function EditGrantPage() {
         </div>
     );
 };
-

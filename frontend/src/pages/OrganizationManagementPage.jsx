@@ -1,7 +1,8 @@
 // frontend/src/pages/OrganizationManagementPage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Users, PlusCircle, Trash2, Crown, Edit } from 'lucide-react';
+import { Users, PlusCircle, Trash2, Crown, Edit, AlertCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import ConfirmationModal from '../components/common/ConfirmationModal';
 
 const AddMemberModal = ({ isOpen, onClose, onMemberAdded, organizationId }) => {
@@ -152,7 +153,10 @@ export default function OrganizationManagementPage() {
     const [memberToProcess, setMemberToProcess] = useState(null);
 
     const isSuperAdmin = user?.role === 'Super Admin';
+    const isGrantMaker = user?.role === 'Grant Maker';
     const isOrgAdmin = user?.organizationRole === 'Admin';
+    const hasOrganization = user?.organization;
+
 
     const fetchMembers = useCallback(async (orgId) => {
         setLoading(true);
@@ -183,10 +187,10 @@ export default function OrganizationManagementPage() {
                 }
             };
             fetchOrgs();
-        } else if (user?.organization) {
+        } else if (hasOrganization) {
             setSelectedOrg(user.organization);
         }
-    }, [isSuperAdmin, user]);
+    }, [isSuperAdmin, user, hasOrganization]);
     
     useEffect(() => {
         if (selectedOrg) {
@@ -227,6 +231,25 @@ export default function OrganizationManagementPage() {
             setMemberToProcess(null);
         }
     };
+
+    if (isGrantMaker && !hasOrganization) {
+        return (
+            <div className="text-center py-20 bg-white dark:bg-gray-800 rounded-xl shadow-md">
+                <AlertCircle className="mx-auto text-red-500" size={48} />
+                <h2 className="mt-4 text-2xl font-bold text-gray-800 dark:text-white">Join an Organization First</h2>
+                <p className="mt-2 text-gray-600 dark:text-gray-300">As a Grant Maker, you must be part of an organization to manage grants. Please join an existing one or create a new one.</p>
+                <div className="mt-6 flex flex-col sm:flex-row justify-center gap-4">
+                    <Link to="/organization/join" className="px-6 py-2 text-white bg-indigo-600 rounded-lg font-semibold hover:bg-indigo-700">
+                        Join an Organization
+                    </Link>
+                     <Link to="/organization/create" className="px-6 py-2 text-indigo-600 border-2 border-indigo-600 rounded-lg font-semibold hover:bg-indigo-50">
+                        Create a New Organization
+                    </Link>
+                </div>
+            </div>
+        );
+    }
+
 
     return (
         <div className="space-y-6">

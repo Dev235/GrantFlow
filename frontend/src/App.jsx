@@ -28,6 +28,7 @@ import ManageJoinRequestsPage from './pages/ManageJoinRequestsPage';
 import ReviewerPage from './pages/ReviewerPage';
 import ApproverPage from './pages/ApproverPage';
 import NotificationsPage from './pages/NotificationsPage'; // Import the new page
+import CreateOrganizationPage from './pages/CreateOrganizationPage'; // Import the new page
 
 // Component Imports
 import Sidebar from './components/common/Sidebar';
@@ -94,6 +95,8 @@ const AppContent = () => {
                         <Route path="/organization" element={<ProtectedRoute roles={['Grant Maker', 'Super Admin', 'Reviewer', 'Approver']}><OrganizationManagementPage /></ProtectedRoute>} />
                         <Route path="/organization/join" element={<ProtectedRoute roles={['Grant Maker']}><JoinOrganizationPage /></ProtectedRoute>} />
                         <Route path="/organization/requests" element={<ProtectedRoute roles={['Grant Maker']}><ManageJoinRequestsPage /></ProtectedRoute>} />
+                        <Route path="/organization/create" element={<ProtectedRoute roles={['Grant Maker']}><CreateOrganizationPage /></ProtectedRoute>} />
+
 
                         {/* Reviewer & Approver Routes */}
                         <Route path="/review" element={<ProtectedRoute roles={['Reviewer']}><ReviewerPage /></ProtectedRoute>} />
@@ -115,4 +118,3 @@ const AppContent = () => {
 };
 
 export default App;
-

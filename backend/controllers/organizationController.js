@@ -46,6 +46,43 @@ const getOrganizationMembers = async (req, res) => {
     }
 };
 
+// New function to create a new organization for an existing user
+const createOrganization = async (req, res) => {
+    const { name } = req.body;
+    const userId = req.user._id;
+
+    try {
+        // Check if the user is already part of an organization
+        const user = await User.findById(userId);
+        if (user.organization) {
+            return res.status(400).json({ message: 'You are already part of an organization.' });
+        }
+
+        const orgExists = await Organization.findOne({ name });
+        if (orgExists) {
+            return res.status(400).json({ message: 'An organization with this name already exists.' });
+        }
+
+        const newOrganization = await Organization.create({
+            name,
+            admins: [userId],
+            members: [userId],
+        });
+        
+        // Update the user's document to link them to the new organization
+        user.organization = newOrganization._id;
+        user.organizationRole = 'Admin';
+        user.joinRequestStatus = 'None';
+        await user.save();
+
+        await logAction(req.user, 'ORG_CREATED', { organizationId: newOrganization._id, organizationName: newOrganization.name });
+        
+        res.status(201).json(newOrganization);
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+};
+
 const requestToJoinOrganization = async (req, res) => {
     const { organizationId } = req.body;
     const userId = req.user._id;
@@ -190,6 +227,10 @@ const handleJoinRequest = async (req, res) => {
         }
 
         const userToJoin = await User.findById(request.user);
+        if (!userToJoin) {
+            await JoinRequest.deleteOne({ _id: requestId });
+            return res.status(404).json({ message: 'User not found for this request. Request has been deleted.' });
+        }
 
         if (action === 'approve') {
             request.status = 'Approved';
@@ -198,17 +239,25 @@ const handleJoinRequest = async (req, res) => {
             userToJoin.joinRequestStatus = 'None';
             organization.members.push(userToJoin._id);
             await organization.save();
-        } else { 
+            await request.save();
+            await userToJoin.save();
+            logAction(req.user, `ORG_JOIN_REQUEST_${action.toUpperCase()}`, { requestId, userId: userToJoin._id });
+
+        } else if (action === 'reject') { 
+            // Update the user's status and delete the join request only
             request.status = 'Rejected';
             userToJoin.joinRequestStatus = 'Rejected';
+            await request.save();
+            await userToJoin.save();
+            
+            logAction(req.user, `ORG_JOIN_REQUEST_REJECTED`, { requestId, userId: userToJoin._id });
+            
+            return res.status(200).json({ message: `Request rejected. The user's account remains active but is not a member of this organization.` });
+        } else {
+             return res.status(400).json({ message: 'Invalid action specified.' });
         }
+        res.json({ message: `Request has been ${action.toLowerCase()}.` });
 
-        await request.save();
-        await userToJoin.save();
-        
-        logAction(req.user, `ORG_JOIN_REQUEST_${action.toUpperCase()}`, { requestId, userId: userToJoin._id });
-
-        res.json({ message: `Request has been ${request.status.toLowerCase()}.` });
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error: error.message });
     }
@@ -257,7 +306,8 @@ const removeOrganizationMember = async (req, res) => {
 
 module.exports = { 
     getOrganizations, 
-    getOrganizationMembers, 
+    getOrganizationMembers,
+    createOrganization, // Add new function to exports
     updateOrganizationMember, 
     removeOrganizationMember,
     requestToJoinOrganization,
@@ -265,5 +315,3 @@ module.exports = {
     handleJoinRequest,
     addOrganizationMember
 };
-
-
