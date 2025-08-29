@@ -1,6 +1,7 @@
 // backend/controllers/applicationController.js
 const Application = require('../models/applicationModel');
 const Grant = require('../models/grantModel');
+const Notification = require('../models/notificationModel');
 const { logAction } = require('../utils/auditLogger');
 
 
@@ -134,10 +135,10 @@ const getMyApplications = async (req, res) => {
 
 // @desc    Update an application's status
 // @route   PUT /api/applications/:id/status
-// @access  Private (Super Admin, Approver)
+// @access  Private (Super Admin, Approver, Reviewer)
 const updateApplicationStatus = async (req, res) => {
     try {
-        const application = await Application.findById(req.params.id);
+        const application = await Application.findById(req.params.id).populate('grant', 'title');
         if (!application) return res.status(404).json({ message: 'Application not found' });
         
         const oldStatus = application.status;
@@ -145,12 +146,31 @@ const updateApplicationStatus = async (req, res) => {
 
         application.status = newStatus || application.status;
 
+        let auditEvent = 'APPLICATION_STATUS_CHANGED';
+        let notification;
+
         if (newStatus === 'Approved') {
             application.approvedBy = req.user._id;
+            auditEvent = 'APPLICATION_APPROVED';
+        } else if (newStatus === 'Rejected') {
+            auditEvent = 'APPLICATION_REJECTED';
+        } else if (newStatus === 'In Review' && oldStatus === 'Waiting for Approval') {
+            auditEvent = 'APPLICATION_REEVALUATION_REQUESTED';
+            if (application.reviewedBy) {
+                notification = {
+                    user: application.reviewedBy,
+                    message: `An approver has requested re-evaluation for an application for the grant: "${application.grant.title}".`,
+                    link: `/manage/applications/${application.grant._id}`
+                };
+            }
+        }
+        
+        if (notification) {
+            await Notification.create(notification);
         }
 
         const updatedApplication = await application.save();
-        await logAction(req.user, 'APPLICATION_STATUS_CHANGED', { applicationId: application._id, from: oldStatus, to: updatedApplication.status });
+        await logAction(req.user, auditEvent, { applicationId: application._id, from: oldStatus, to: updatedApplication.status });
         res.json(updatedApplication);
     } catch (error) {
         res.status(400).json({ message: 'Invalid data', error: error.message });

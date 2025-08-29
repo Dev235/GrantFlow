@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, Inbox, CheckCircle, FileWarning } from 'lucide-react';
+import { ChevronRight, Inbox, CheckCircle, FileWarning, Eye } from 'lucide-react';
 import StatCard from '../components/dashboard/StatCard';
 
 export default function ReviewerPage() {
@@ -59,23 +59,33 @@ export default function ReviewerPage() {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Grant Title</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Pending Review</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Completed</th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase"></th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Action</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         {grants.length > 0 ? grants.map(grant => (
-                            <tr key={grant._id} className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer" onClick={() => navigate(`/manage/applications/${grant._id}`)}>
+                            <tr key={grant._id}>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{grant.title}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-yellow-600 dark:text-yellow-400 flex items-center gap-2">
-                                    <Inbox size={16} />
-                                    {grant.pendingReviewCount}
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-yellow-600 dark:text-yellow-400">
+                                    <div className="flex items-center gap-2">
+                                        <Inbox size={16} />
+                                        {grant.pendingReviewCount}
+                                    </div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 dark:text-green-400 flex items-center gap-2">
-                                    <CheckCircle size={16} />
-                                    {grant.reviewedCount}
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 dark:text-green-400">
+                                    <div className="flex items-center gap-2">
+                                        <CheckCircle size={16} />
+                                        {grant.reviewedCount}
+                                    </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right">
-                                    <ChevronRight size={20} className="text-gray-400" />
+                                    <button 
+                                        onClick={() => navigate(`/manage/applications/${grant._id}`)} 
+                                        className="p-2 text-indigo-600 rounded-md hover:bg-indigo-100 dark:hover:bg-indigo-900/50"
+                                        title="View Applications"
+                                    >
+                                        <Eye size={18} />
+                                    </button>
                                 </td>
                             </tr>
                         )) : (
@@ -91,4 +101,3 @@ export default function ReviewerPage() {
         </div>
     );
 }
-

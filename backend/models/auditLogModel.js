@@ -17,6 +17,7 @@ const auditLogSchema = new mongoose.Schema(
         'GRANT_CREATED', 'GRANT_UPDATED', 'GRANT_DELETED', 'GRANT_STATUS_CHANGED',
         'GRANT_REVIEWER_ASSIGNED', 'GRANT_APPROVER_ASSIGNED',
         'APPLICATION_SUBMITTED', 'APPLICATION_STATUS_CHANGED', 'APPLICATION_FLAG_CHANGED', 'APPLICATION_SCORED',
+        'APPLICATION_APPROVED', 'APPLICATION_REJECTED', 'APPLICATION_REEVALUATION_REQUESTED',
         'ORG_MEMBER_ADDED', 'ORG_MEMBER_REMOVED', 'ORG_MEMBER_ROLE_CHANGED'
       ],
     },
@@ -33,3 +34,4 @@ const auditLogSchema = new mongoose.Schema(
 const AuditLog = mongoose.model('AuditLog', auditLogSchema);
 
 module.exports = AuditLog;
+

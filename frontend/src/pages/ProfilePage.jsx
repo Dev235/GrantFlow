@@ -165,94 +165,98 @@ export default function ProfilePage() {
         if (user.role === 'Super Admin') return null;
         if (user.verificationStatus === 'Verified') {
             return (
-                <div className="p-3 bg-green-100 text-green-700 rounded-lg flex items-center gap-2">
+                <div className="p-3 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 rounded-lg flex items-center gap-2">
                     <CheckCircle size={18} /> Your profile is verified. Note: Changing details will require re-verification.
                 </div>
             )
         }
         if (user.verificationStatus === 'Pending') {
             return (
-                <div className="p-3 bg-yellow-100 text-yellow-700 rounded-lg flex items-center gap-2">
+                <div className="p-3 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 rounded-lg flex items-center gap-2">
                     <AlertCircle size={18} /> Your profile is pending verification from an administrator.
                 </div>
             )
         }
         return (
-            <div className="p-3 bg-red-100 text-red-700 rounded-lg flex items-center gap-2">
+            <div className="p-3 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 rounded-lg flex items-center gap-2">
                 <AlertCircle size={18} /> Your profile is unverified. Please complete all fields to submit for verification.
             </div>
         )
     }
 
+    const inputClasses = "mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200";
+    const disabledInputClasses = "mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800";
+    const labelClasses = "block text-sm font-medium text-gray-700 dark:text-gray-300";
+
     return (
         <div className="max-w-4xl mx-auto">
-            <h1 className="text-3xl font-bold text-gray-800 mb-6">My Profile</h1>
-            <form onSubmit={handleSubmit} className="space-y-8 bg-white p-8 rounded-xl shadow-md">
+            <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">My Profile</h1>
+            <form onSubmit={handleSubmit} className="space-y-8 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-md">
                 {error && <div className="p-3 bg-red-100 text-red-700 rounded-lg">{error}</div>}
                 {success && <div className="p-3 bg-green-100 text-green-700 rounded-lg">{success}</div>}
                 <VerificationBanner />
 
                 <div className="space-y-4">
-                    <h2 className="text-xl font-semibold text-gray-700 border-b pb-2">Account Information</h2>
+                    <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600 pb-2">Account Information</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Full Name</label>
-                            <input type="text" name="name" value={formData.name} onChange={handleFormChange} className="mt-1 block w-full rounded-md border-gray-300" />
+                            <label className={labelClasses}>Full Name</label>
+                            <input type="text" name="name" value={formData.name} onChange={handleFormChange} className={inputClasses} />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Email</label>
-                            <input type="email" name="email" value={formData.email} disabled className="mt-1 block w-full rounded-md border-gray-300 bg-gray-100" />
+                            <label className={labelClasses}>Email</label>
+                            <input type="email" name="email" value={formData.email} disabled className={disabledInputClasses} />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">New Password</label>
-                            <input type="password" name="password" value={formData.password} onChange={handleFormChange} className="mt-1 block w-full rounded-md border-gray-300" placeholder="Leave blank to keep current password" />
+                            <label className={labelClasses}>New Password</label>
+                            <input type="password" name="password" value={formData.password} onChange={handleFormChange} className={inputClasses} placeholder="Leave blank to keep current password" />
                         </div>
                     </div>
                 </div>
 
                 <div className="space-y-4">
-                    <h2 className="text-xl font-semibold text-gray-700 border-b pb-2">Personal Details</h2>
+                    <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600 pb-2">Personal Details</h2>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Address</label>
-                        <textarea name="address" value={formData.profile.address} onChange={handleProfileChange} rows="3" className="mt-1 block w-full rounded-md border-gray-300"></textarea>
+                        <label className={labelClasses}>Address</label>
+                        <textarea name="address" value={formData.profile.address} onChange={handleProfileChange} rows="3" className={inputClasses}></textarea>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="text" name="icNumber" value={formData.profile.icNumber} onChange={handleProfileChange} placeholder="IC Number (e.g., 900101-10-1234)" className="rounded-md border-gray-300" maxLength="15" />
-                        <input type="text" name="emergencyContact" value={formData.profile.emergencyContact} onChange={handleProfileChange} placeholder="Emergency Contact (e.g., 012-3456789)" className="rounded-md border-gray-300" />
-                        <input type="number" name="age" value={formData.profile.age} onChange={handleProfileChange} placeholder="Age" className="rounded-md border-gray-300" min="0" />
-                        <select name="gender" value={formData.profile.gender} onChange={handleProfileChange} className="rounded-md border-gray-300">
+                        <input type="text" name="icNumber" value={formData.profile.icNumber} onChange={handleProfileChange} placeholder="IC Number (e.g., 900101-10-1234)" className={inputClasses} maxLength="15" />
+                        <input type="text" name="emergencyContact" value={formData.profile.emergencyContact} onChange={handleProfileChange} placeholder="Emergency Contact (e.g., 012-3456789)" className={inputClasses} />
+                        <input type="number" name="age" value={formData.profile.age} onChange={handleProfileChange} placeholder="Age" className={inputClasses} min="0" />
+                        <select name="gender" value={formData.profile.gender} onChange={handleProfileChange} className={inputClasses}>
                             <option value="">Select Gender</option>
                             <option value="Male">Male</option>
                             <option value="Female">Female</option>
                         </select>
-                        <select name="race" value={formData.profile.race} onChange={handleProfileChange} className="rounded-md border-gray-300">
+                        <select name="race" value={formData.profile.race} onChange={handleProfileChange} className={inputClasses}>
                             <option value="">Select Race</option>
                             <option value="Malay">Malay</option>
                             <option value="Chinese">Chinese</option>
                             <option value="Indian">Indian</option>
                             <option value="Other">Other</option>
                         </select>
-                        <select name="incomeGroup" value={formData.profile.incomeGroup} onChange={handleProfileChange} className="rounded-md border-gray-300">
+                        <select name="incomeGroup" value={formData.profile.incomeGroup} onChange={handleProfileChange} className={inputClasses}>
                             <option value="">Select Income Group</option>
                             <option value="B40">B40</option>
                             <option value="M40">M40</option>
                             <option value="T20">T20</option>
                         </select>
-                        <input type="number" name="income" value={formData.profile.income} onChange={handleProfileChange} placeholder="Monthly Income (MYR)" className="rounded-md border-gray-300" min="0" />
+                        <input type="number" name="income" value={formData.profile.income} onChange={handleProfileChange} placeholder="Monthly Income (MYR)" className={inputClasses} min="0" />
                     </div>
                 </div>
 
                 <div className="space-y-4">
-                     <h2 className="text-xl font-semibold text-gray-700 border-b pb-2">Documents & Images</h2>
+                     <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600 pb-2">Documents & Images</h2>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Profile Picture</label>
-                            <input type="file" name="profilePictureUrl" onChange={handleFileChange} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
+                            <label className={labelClasses}>Profile Picture</label>
+                            <input type="file" name="profilePictureUrl" onChange={handleFileChange} className="mt-1 block w-full text-sm text-gray-500 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 dark:file:bg-indigo-900/50 file:text-indigo-700 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-900"/>
                             {formData.profile.profilePictureUrl && <img src={`${import.meta.env.VITE_API_BASE_URL}${formData.profile.profilePictureUrl}`} alt="Profile Preview" className="mt-2 h-24 w-24 rounded-full object-cover"/>}
                         </div>
                          <div>
-                            <label className="block text-sm font-medium text-gray-700">IC Picture</label>
-                            <input type="file" name="icPictureUrl" onChange={handleFileChange} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
+                            <label className={labelClasses}>IC Picture</label>
+                            <input type="file" name="icPictureUrl" onChange={handleFileChange} className="mt-1 block w-full text-sm text-gray-500 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 dark:file:bg-indigo-900/50 file:text-indigo-700 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-900"/>
                              {formData.profile.icPictureUrl && <img src={`${import.meta.env.VITE_API_BASE_URL}${formData.profile.icPictureUrl}`} alt="IC Preview" className="mt-2 h-32 rounded-lg object-contain"/>}
                         </div>
                      </div>

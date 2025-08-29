@@ -50,7 +50,7 @@ const applicationSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['Submitted', 'In Review', 'Approved', 'Rejected'],
+      enum: ['Submitted', 'In Review', 'Waiting for Approval', 'Approved', 'Rejected'],
       default: 'Submitted',
     },
     score: {

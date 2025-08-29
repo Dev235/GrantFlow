@@ -1,6 +1,7 @@
 // backend/controllers/grantController.js
 const Grant = require('../models/grantModel');
 const Application = require('../models/applicationModel');
+const Notification = require('../models/notificationModel');
 const mongoose = require('mongoose');
 const { logAction } = require('../utils/auditLogger');
 
@@ -75,6 +76,18 @@ const createGrant = async (req, res) => {
     });
     const createdGrant = await grant.save();
     await logAction(req.user, 'GRANT_CREATED', { grantId: createdGrant._id, grantTitle: createdGrant.title });
+    
+    // Create notifications for assigned reviewers and approvers
+    const userIdsToNotify = [...(reviewers || []), ...(approvers || [])];
+    const notifications = userIdsToNotify.map(userId => ({
+        user: userId,
+        message: `You have been assigned to a new grant: "${createdGrant.title}".`,
+        link: `/manage/applications/${createdGrant._id}`
+    }));
+    if (notifications.length > 0) {
+        await Notification.insertMany(notifications);
+    }
+    
     if (reviewers && reviewers.length > 0) {
         await logAction(req.user, 'GRANT_REVIEWER_ASSIGNED', { grantId: createdGrant._id, reviewers });
     }
@@ -166,7 +179,7 @@ const getGrantsForReview = async (req, res) => {
         const grantsWithCounts = await Promise.all(grants.map(async (grant) => {
             const reviewedCount = await Application.countDocuments({
                 grant: grant._id,
-                status: { $in: ['Approved', 'Rejected'] } 
+                status: { $in: ['Waiting for Approval', 'Approved', 'Rejected'] } 
             });
             const pendingReviewCount = await Application.countDocuments({
                 grant: grant._id,
@@ -195,7 +208,7 @@ const getGrantsForApproval = async (req, res) => {
             // Approvers act on applications that have been reviewed but not yet decided
             const pendingApprovalCount = await Application.countDocuments({
                 grant: grant._id,
-                status: 'In Review'
+                status: 'Waiting for Approval'
             });
             return { ...grant, approvedCount, pendingApprovalCount };
         }));
@@ -221,8 +234,8 @@ const getApprovalCount = async (req, res) => {
     try {
         const grants = await Grant.find({ approvers: req.user._id, status: 'Active' }).select('_id');
         const grantIds = grants.map(g => g._id);
-        // Approvers look at applications that are 'In Review'
-        const count = await Application.countDocuments({ grant: { $in: grantIds }, status: 'In Review' });
+        // Approvers look at applications that are 'Waiting for Approval'
+        const count = await Application.countDocuments({ grant: { $in: grantIds }, status: 'Waiting for Approval' });
         res.json({ count });
     } catch (error) {
         res.status(500).json({ message: 'Server Error' });

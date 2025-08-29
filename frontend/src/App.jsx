@@ -27,6 +27,7 @@ import JoinOrganizationPage from './pages/JoinOrganizationPage';
 import ManageJoinRequestsPage from './pages/ManageJoinRequestsPage';
 import ReviewerPage from './pages/ReviewerPage';
 import ApproverPage from './pages/ApproverPage';
+import NotificationsPage from './pages/NotificationsPage'; // Import the new page
 
 // Component Imports
 import Sidebar from './components/common/Sidebar';
@@ -79,6 +80,7 @@ const AppContent = () => {
                         <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
                         <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
                         <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+                        <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
 
                         {/* Applicant Routes */}
                         <Route path="/applications" element={<ProtectedRoute roles={['Applicant']}><MyApplicationsPage /></ProtectedRoute>} />

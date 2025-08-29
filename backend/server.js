@@ -14,7 +14,8 @@ const applicationRoutes = require('./routes/applicationRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const auditRoutes = require('./routes/auditRoutes');
-const organizationRoutes = require('./routes/organizationRoutes'); // Import organization routes
+const organizationRoutes = require('./routes/organizationRoutes');
+const notificationRoutes = require('./routes/notificationRoutes'); // Import notification routes
 
 // Load environment variables
 dotenv.config();
