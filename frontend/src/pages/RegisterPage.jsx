@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+// frontend/src/pages/RegisterPage.jsx
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -7,26 +8,53 @@ export default function RegisterPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [role, setRole] = useState('Applicant');
+    const [organizations, setOrganizations] = useState([]);
+    const [organizationId, setOrganizationId] = useState('');
+    const [newOrganizationName, setNewOrganizationName] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        if (role === 'Grant Maker') {
+            const fetchOrganizations = async () => {
+                try {
+                    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/organizations`);
+                    const data = await response.json();
+                    setOrganizations(data);
+                } catch (err) {
+                    setError('Could not fetch organizations.');
+                }
+            };
+            fetchOrganizations();
+        }
+    }, [role]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError('');
         try {
+            const body = { name, email, password, role };
+            if (role === 'Grant Maker') {
+                if (organizationId === 'new') {
+                    if (!newOrganizationName) throw new Error('Please enter a name for the new organization.');
+                    body.newOrganizationName = newOrganizationName;
+                } else {
+                    if (!organizationId) throw new Error('Please select an organization.');
+                    body.organizationId = organizationId;
+                }
+            }
             const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, password, role }),
+                body: JSON.stringify(body),
             });
             const data = await response.json();
             if (!response.ok) {
                 throw new Error(data.message || 'Failed to register');
             }
-            // Log the user in immediately after successful registration
             login(data);
             navigate('/dashboard');
         } catch (err) {
@@ -45,24 +73,39 @@ export default function RegisterPage() {
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label className="text-sm font-medium text-gray-700">Full Name</label>
-                        <input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g., Ahmad bin Abdullah" />
+                        <input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="w-full px-4 py-2 mt-2 border rounded-lg" placeholder="e.g., Ahmad bin Abdullah" />
                     </div>
                     <div>
                         <label className="text-sm font-medium text-gray-700">Email Address</label>
-                        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="you@example.com" />
+                        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full px-4 py-2 mt-2 border rounded-lg" placeholder="you@example.com" />
                     </div>
                     <div>
                         <label className="text-sm font-medium text-gray-700">Password</label>
-                        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Minimum 8 characters" />
+                        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="w-full px-4 py-2 mt-2 border rounded-lg" placeholder="Minimum 8 characters" />
                     </div>
                     <div>
                         <label className="text-sm font-medium text-gray-700">I am a...</label>
-                        <select value={role} onChange={(e) => setRole(e.target.value)} className="w-full px-4 py-2 mt-2 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <select value={role} onChange={(e) => setRole(e.target.value)} className="w-full px-4 py-2 mt-2 bg-white border rounded-lg">
                             <option value="Applicant">Grant Applicant (Grantee)</option>
                             <option value="Grant Maker">Grant Maker</option>
                         </select>
                     </div>
-                    <button type="submit" disabled={loading} className="w-full py-3 font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-300">
+
+                    {role === 'Grant Maker' && (
+                        <div className="p-4 border-t">
+                            <label className="text-sm font-medium text-gray-700">Organization</label>
+                            <select value={organizationId} onChange={(e) => setOrganizationId(e.target.value)} className="w-full px-4 py-2 mt-2 bg-white border rounded-lg">
+                                <option value="">-- Select an Organization --</option>
+                                {organizations.map(org => <option key={org._id} value={org._id}>{org.name}</option>)}
+                                <option value="new">-- Create a New Organization --</option>
+                            </select>
+                            {organizationId === 'new' && (
+                                <input type="text" value={newOrganizationName} onChange={(e) => setNewOrganizationName(e.target.value)} className="w-full px-4 py-2 mt-2 border rounded-lg" placeholder="New Organization Name" />
+                            )}
+                        </div>
+                    )}
+
+                    <button type="submit" disabled={loading} className="w-full py-3 font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:bg-indigo-300">
                         {loading ? 'Creating Account...' : 'Create Account'}
                     </button>
                 </form>

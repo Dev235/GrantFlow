@@ -1,3 +1,4 @@
+// frontend/src/pages/GrantsPage.jsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -14,6 +15,7 @@ export default function GrantsPage() {
     useEffect(() => {
         const fetchGrants = async () => {
             try {
+                // This endpoint now correctly fetches only 'Active' grants from the backend
                 const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/grants`);
                 if (!response.ok) throw new Error('Could not fetch grants from the server.');
                 const data = await response.json();
@@ -88,8 +90,8 @@ export default function GrantsPage() {
                 </div>
             ) : (
                 <div className="text-center py-20 bg-white rounded-xl shadow-md">
-                    <h3 className="text-xl font-semibold text-gray-700">No Grants Found</h3>
-                    <p className="text-gray-500 mt-2">Your search for "{searchTerm}" did not match any available grants. Try a different keyword.</p>
+                    <h3 className="text-xl font-semibold text-gray-700">No Active Grants Found</h3>
+                    <p className="text-gray-500 mt-2">There are currently no active grants available. Please check back later.</p>
                 </div>
             )}
         </div>

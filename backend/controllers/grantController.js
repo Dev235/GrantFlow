@@ -1,15 +1,16 @@
-// controllers/grantController.js
+// backend/controllers/grantController.js
 const Grant = require('../models/grantModel');
 const Application = require('../models/applicationModel');
 const { logAction } = require('../utils/auditLogger');
 
 
-// @desc    Fetch all open grants
+// @desc    Fetch all active grants for the public
 // @route   GET /api/grants
 // @access  Public
 const getOpenGrants = async (req, res) => {
   try {
-    const grants = await Grant.find({ status: 'Open' }).populate('grantMaker', 'name email').sort({ createdAt: -1 });
+    // This now fetches 'Active' grants instead of 'Open'
+    const grants = await Grant.find({ status: 'Active' }).populate('grantMaker', 'name email').sort({ createdAt: -1 });
     res.json(grants);
   } catch (error) {
     res.status(500).json({ message: 'Server Error: Could not fetch grants.' });
@@ -63,14 +64,22 @@ const createGrant = async (req, res) => {
   if (req.user.verificationStatus !== 'Verified') {
     return res.status(403).json({ message: 'Your account must be verified to create grants.' });
   }
-  const { title, description, amount, category, deadline, applicationQuestions } = req.body;
+  const { title, description, amount, category, deadline, applicationQuestions, reviewers, approvers } = req.body;
   try {
     const grant = new Grant({
       title, description, amount, category, deadline, applicationQuestions,
       grantMaker: req.user._id,
+      reviewers,
+      approvers,
     });
     const createdGrant = await grant.save();
     await logAction(req.user, 'GRANT_CREATED', { grantId: createdGrant._id, grantTitle: createdGrant.title });
+    if (reviewers && reviewers.length > 0) {
+        await logAction(req.user, 'GRANT_REVIEWER_ASSIGNED', { grantId: createdGrant._id, reviewers });
+    }
+     if (approvers && approvers.length > 0) {
+        await logAction(req.user, 'GRANT_APPROVER_ASSIGNED', { grantId: createdGrant._id, approvers });
+    }
     res.status(201).json(createdGrant);
   } catch (error) {
     res.status(400).json({ message: 'Invalid grant data.', error: error.message });
@@ -81,15 +90,16 @@ const createGrant = async (req, res) => {
 // @route   PUT /api/grants/:id
 // @access  Private (Grant Maker or Super Admin)
 const updateGrant = async (req, res) => {
-    const { title, description, amount, category, deadline, status, applicationQuestions } = req.body;
+    const { title, description, amount, category, deadline, status, phase, applicationQuestions, reviewers, approvers } = req.body;
     try {
         const grant = await Grant.findById(req.params.id);
 
         if (grant) {
-            // Allow edit ONLY if user is the owner. Super Admin cannot edit.
-            if (grant.grantMaker.toString() !== req.user._id.toString()) {
+            if (grant.grantMaker.toString() !== req.user._id.toString() && req.user.role !== 'Super Admin') {
                 return res.status(403).json({ message: 'Not authorized to edit this grant' });
             }
+
+            const oldStatus = grant.status;
 
             grant.title = title || grant.title;
             grant.description = description || grant.description;
@@ -97,10 +107,19 @@ const updateGrant = async (req, res) => {
             grant.category = category || grant.category;
             grant.deadline = deadline || grant.deadline;
             grant.status = status || grant.status;
+            grant.phase = phase || grant.phase;
             grant.applicationQuestions = applicationQuestions || grant.applicationQuestions;
+            grant.reviewers = reviewers || grant.reviewers;
+            grant.approvers = approvers || grant.approvers;
 
             const updatedGrant = await grant.save();
-            await logAction(req.user, 'GRANT_UPDATED', { grantId: updatedGrant._id, grantTitle: updatedGrant.title });
+            
+            if (oldStatus !== updatedGrant.status) {
+                 await logAction(req.user, 'GRANT_STATUS_CHANGED', { grantId: updatedGrant._id, grantTitle: updatedGrant.title, from: oldStatus, to: updatedGrant.status });
+            } else {
+                 await logAction(req.user, 'GRANT_UPDATED', { grantId: updatedGrant._id, grantTitle: updatedGrant.title });
+            }
+
             res.json(updatedGrant);
 
         } else {

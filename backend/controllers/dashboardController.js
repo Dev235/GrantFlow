@@ -1,4 +1,4 @@
-// controllers/dashboardController.js
+// backend/controllers/dashboardController.js
 const Grant = require('../models/grantModel');
 const Application = require('../models/applicationModel');
 const User = require('../models/userModel');
@@ -11,10 +11,11 @@ const getGrantMakerStats = async (req, res) => {
     try {
         const userId = req.user._id;
 
-        const totalGrants = await Grant.countDocuments({ grantMaker: userId });
-        const activeGrants = await Grant.countDocuments({ grantMaker: userId, status: 'Open' });
-        
-        const totalApplications = await Application.countDocuments({ grantMaker: userId });
+        // Updated stats to be more meaningful for Grant Makers
+        const draftGrants = await Grant.countDocuments({ grantMaker: userId, status: 'Draft' });
+        const activeGrants = await Grant.countDocuments({ grantMaker: userId, status: 'Active' });
+        const inactiveGrants = await Grant.countDocuments({ grantMaker: userId, status: 'Inactive' });
+
         const approvedApplications = await Application.countDocuments({ grantMaker: userId, status: 'Approved' });
 
         const awardedData = await Application.aggregate([
@@ -33,9 +34,9 @@ const getGrantMakerStats = async (req, res) => {
         ]);
         
         res.json({
-            totalGrants,
+            draftGrants,
             activeGrants,
-            totalApplications,
+            inactiveGrants,
             approvedApplications,
             totalAwarded,
             applicationsByCategory: applicationsByCategory.map(item => ({ name: item._id, applications: item.applications })),

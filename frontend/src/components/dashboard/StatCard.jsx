@@ -1,7 +1,8 @@
-// src/components/dashboard/StatCard.jsx
+// frontend/src/components/dashboard/StatCard.jsx
 import React from 'react';
+import { Link } from 'react-router-dom';
 
-export default function StatCard({ icon, title, value, color }) {
+export default function StatCard({ icon, title, value, color, linkTo }) {
     const colors = {
         blue: 'bg-blue-100 text-blue-500',
         yellow: 'bg-yellow-100 text-yellow-500',
@@ -10,10 +11,11 @@ export default function StatCard({ icon, title, value, color }) {
         indigo: 'bg-indigo-100 text-indigo-500',
         teal: 'bg-teal-100 text-teal-500',
         pink: 'bg-pink-100 text-pink-500',
+        gray: 'bg-gray-100 text-gray-500',
     };
 
-    return (
-        <div className="bg-white p-6 rounded-xl shadow-md flex items-center space-x-4">
+    const cardContent = (
+        <div className="bg-white p-6 rounded-xl shadow-md flex items-center space-x-4 transition-transform transform hover:scale-105">
             <div className={`p-3 rounded-full ${colors[color] || 'bg-gray-100'}`}>
                 {icon}
             </div>
@@ -23,4 +25,10 @@ export default function StatCard({ icon, title, value, color }) {
             </div>
         </div>
     );
+
+    if (linkTo) {
+        return <Link to={linkTo}>{cardContent}</Link>;
+    }
+
+    return cardContent;
 };

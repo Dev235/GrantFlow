@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LogOut, LayoutDashboard, FileText, Edit, FolderKanban, UserCircle, Users, History, AlertCircle, CheckCircle } from 'lucide-react';
+import { LogOut, LayoutDashboard, FileText, Edit, FolderKanban, UserCircle, Users, History, AlertCircle, CheckCircle, Building, UserPlus } from 'lucide-react';
 
 const VerificationStatus = ({ status }) => {
     if (status === 'Verified') {
@@ -20,7 +20,6 @@ export default function Navbar() {
 
     const handleLogout = async () => {
         try {
-            // Call the backend to log the logout action
             await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/logout`, {
                 method: 'POST',
                 headers: {
@@ -30,7 +29,6 @@ export default function Navbar() {
         } catch (error) {
             console.error('Failed to log logout action on server:', error);
         } finally {
-            // Proceed with client-side logout regardless of API call success
             logout();
             navigate('/login');
         }
@@ -46,12 +44,16 @@ export default function Navbar() {
         { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={18}/> },
         { name: 'Create Grant', path: '/manage/create', icon: <Edit size={18}/> },
         { name: 'Manage Grants', path: '/manage/grants', icon: <FolderKanban size={18}/> },
+        { name: 'Organization', path: '/organization', icon: <Building size={18}/> },
+        { name: 'Join Requests', path: '/organization/requests', icon: <UserPlus size={18}/> },
     ];
+    
 
     const superAdminLinks = [
         { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={18}/> },
         { name: 'User Management', path: '/admin/users', icon: <Users size={18}/> },
         { name: 'Manage All Grants', path: '/manage/grants', icon: <FolderKanban size={18}/> },
+        { name: 'Organization', path: '/organization', icon: <Building size={18}/> },
         { name: 'Audit Log', path: '/admin/audit', icon: <History size={18}/> },
     ];
 

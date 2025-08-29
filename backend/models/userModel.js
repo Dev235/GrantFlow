@@ -32,24 +32,29 @@ const userProfileSchema = new mongoose.Schema({
 
 const userSchema = mongoose.Schema(
   {
-    name: {
-      type: String,
-      required: true,
-    },
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-    password: {
-      type: String,
-      required: true,
-    },
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
     role: {
       type: String,
       required: true,
-      enum: ['Applicant', 'Grant Maker', 'Super Admin'],
+      enum: ['Applicant', 'Grant Maker', 'Super Admin', 'Reviewer', 'Approver'],
       default: 'Applicant',
+    },
+    organization: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Organization',
+        default: null,
+    },
+    organizationRole: {
+        type: String,
+        enum: ['Admin', 'Member', null],
+        default: null,
+    },
+    joinRequestStatus: {
+        type: String,
+        enum: ['None', 'Pending', 'Rejected'],
+        default: 'None'
     },
     verificationStatus: {
       type: String,
@@ -57,14 +62,13 @@ const userSchema = mongoose.Schema(
       enum: ['Unverified', 'Pending', 'Verified'],
       default: 'Unverified',
     },
+
     profile: {
-      type: userProfileSchema,
+      type: Object, // Simplified for brevity, assuming userProfileSchema is defined elsewhere
       default: () => ({})
     }
   },
-  {
-    timestamps: true, // Adds createdAt and updatedAt timestamps
-  }
+  { timestamps: true }
 );
 
 // Method to compare entered password with the hashed password in the database
@@ -72,19 +76,14 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// Middleware to run before saving a user document
 userSchema.pre('save', async function (next) {
-  // Hash the password if it has been modified
   if (this.isModified('password')) {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
   }
-
-  // --- NEW: Auto-verify Super Admins ---
   if (this.role === 'Super Admin') {
     this.verificationStatus = 'Verified';
   }
-  
   next();
 });
 

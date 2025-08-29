@@ -13,7 +13,6 @@ const answerSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  // NEW: Added questionType to easily identify file uploads on the frontend.
   questionType: {
     type: String,
     required: true,
@@ -22,6 +21,15 @@ const answerSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.Mixed, // Can be String, Number, Date, or a file path (String)
     required: true,
   },
+  // NEW: Fields for reviewer's score and comments per answer
+  reviewerScore: {
+    type: Number,
+    default: 0
+  },
+  reviewerComments: {
+      type: String,
+      default: ''
+  }
 });
 
 const applicationSchema = new mongoose.Schema(
@@ -50,13 +58,16 @@ const applicationSchema = new mongoose.Schema(
         type: Number,
         default: 0,
     },
-    // NEW: Add a flag field for internal review categorization
     flag: {
       type: String,
       enum: ['green', 'orange', 'red', null],
       default: null,
     },
     answers: [answerSchema],
+    reviewedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }
   },
   {
     timestamps: true,
