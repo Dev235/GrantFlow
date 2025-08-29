@@ -42,6 +42,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/organizations', organizationRoutes); // Mount organization routes
+app.use('/api/notifications', notificationRoutes); // Mount notification routes
 
 // --- Serve Uploaded Files Statically ---
 app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
